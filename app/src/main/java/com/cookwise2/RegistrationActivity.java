@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -15,12 +16,15 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.cookwise2.utils.RegistrationManager;
+import com.cookwise2.utils.UserImageSelector;
 
 public class RegistrationActivity extends AppCompatActivity {
     private static final String TAG = "RegistrationActivity";
 
     EditText emailEditText;
     EditText passwordEditText;
+    UserImageSelector userImageSelector;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +39,16 @@ public class RegistrationActivity extends AppCompatActivity {
 
         emailEditText = findViewById(R.id.et_Email);
         passwordEditText = findViewById(R.id.et_password);
+
+        ImageView profilePictureImageView = findViewById(R.id.iv_profile_picture);
+        userImageSelector = new UserImageSelector(this, profilePictureImageView);
+        Button choosePictureButton = findViewById(R.id.btn_choose_picture);
+        choosePictureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userImageSelector.showImageSourceDialog();
+            }
+        });
 
         Button registerButton = findViewById(R.id.btn_register);
         registerButton.setOnClickListener(new View.OnClickListener() {
@@ -53,6 +67,7 @@ public class RegistrationActivity extends AppCompatActivity {
         registrationManager.startRegistration(
                 emailEditText.getText().toString(),
                 passwordEditText.getText().toString(),
+                userImageSelector.createImageFile(),
                 new RegistrationManager.OnResultCallback(){
                     @Override
                     public void onResult(boolean success, String message) {

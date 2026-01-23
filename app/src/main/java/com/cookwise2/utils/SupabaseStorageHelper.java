@@ -15,7 +15,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SupabaseStorageHelper {
-    private static final String supabaseUrl = "https://wkxapzreydqpqsthggzk.supabase.co\n";
+    private static final String supabaseUrl = "https://wkxapzreydqpqsthggzk.supabase.co";
 
     private static final String supabaseKey = "sb_publishable_xU4icN9MgCMlXooShQ-AZQ_7SVgm4og";
 

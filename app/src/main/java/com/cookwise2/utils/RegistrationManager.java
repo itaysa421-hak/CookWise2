@@ -11,6 +11,8 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.io.File;
+
 public class RegistrationManager {
     private static final String TAG = "RegistrationManager";
 
@@ -20,6 +22,7 @@ public class RegistrationManager {
     private static final int REGISTRATION_PHASE_UPLOAD_DATA = 3;
     private static final int REGISTRATION_PHASE_DONE = 4;
     private int registrationPhase;
+    File imageFile;
 
     FirebaseAuth auth;
     String userId;
@@ -43,11 +46,13 @@ public class RegistrationManager {
 
     public void startRegistration(String email,
                                   String password,
+                                  File imageFile,
                                   OnResultCallback onResultCallback)
     {
         this.onResultCallback = onResultCallback;
         this.email = email;
         this.password = password;
+        this.imageFile = imageFile;
 
         executeNextPhase();
     }
@@ -150,7 +155,27 @@ public class RegistrationManager {
     }
 
     private void uploadProfilePictureToSupabase() {
-        phaseDone();
+        if (imageFile == null) {
+            Log.d(TAG, "uploadProfilePictureToSupabase: no image file provided");
+            phaseDone();
+            return;
+        }
+
+        String filename = "images/profile-pics/" + userId + ".jpg";
+        Log.i(TAG, "Uploading file to Supabase: " + filename);
+
+        SupabaseStorageHelper.uploadPicture(imageFile, filename, new SupabaseStorageHelper.OnResultCallback() {
+            @Override
+            public void onResult(boolean success, String url, String error) {
+                if (success) {
+                    Log.i(TAG, "Profile picture uploaded successfully to Supabase. Public URL: " + url);
+                    phaseDone();
+                } else {
+                    Log.e(TAG, "Supabase upload failed: " + error);
+                    phaseFailed("Failed to upload profile picture (Supabase): " + error);
+                }
+            }
+        });
     }
 
 
