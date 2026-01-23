@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "21135870738",
+    "project_id": "cookwise2-6250f",
+    "storage_bucket": "cookwise2-6250f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:21135870738:android:3791ab6f7226c16a9281cb",
+        "android_client_info": {
+          "package_name": "com.cookwise2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWYc17dFv2fiwHbphEFnIWUhd8yJhXjvQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
