@@ -23,6 +23,8 @@ public class RegistrationActivity extends AppCompatActivity {
 
     EditText emailEditText;
     EditText passwordEditText;
+
+    EditText nicknameEditText;
     UserImageSelector userImageSelector;
 
 
@@ -39,6 +41,7 @@ public class RegistrationActivity extends AppCompatActivity {
 
         emailEditText = findViewById(R.id.et_Email);
         passwordEditText = findViewById(R.id.et_password);
+        nicknameEditText = findViewById(R.id.et_nickname);
 
         ImageView profilePictureImageView = findViewById(R.id.iv_profile_picture);
         userImageSelector = new UserImageSelector(this, profilePictureImageView);
@@ -68,6 +71,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 emailEditText.getText().toString(),
                 passwordEditText.getText().toString(),
                 userImageSelector.createImageFile(),
+                nicknameEditText.getText().toString(),
                 new RegistrationManager.OnResultCallback(){
                     @Override
                     public void onResult(boolean success, String message) {

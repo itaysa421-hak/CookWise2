@@ -10,8 +10,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegistrationManager {
     private static final String TAG = "RegistrationManager";
@@ -29,7 +32,7 @@ public class RegistrationManager {
 
     String email;
     String password;
-
+    String nickname;
     Activity activity;
 
     OnResultCallback onResultCallback;
@@ -47,12 +50,14 @@ public class RegistrationManager {
     public void startRegistration(String email,
                                   String password,
                                   File imageFile,
+                                  String nickname,
                                   OnResultCallback onResultCallback)
     {
         this.onResultCallback = onResultCallback;
         this.email = email;
         this.password = password;
         this.imageFile = imageFile;
+        this.nickname = nickname;
 
         executeNextPhase();
     }
@@ -180,7 +185,23 @@ public class RegistrationManager {
 
 
     private void saveUserToFirestore() {
-        phaseDone();
+        Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname);
+        Map<String, Object> userMap = new HashMap<>();
+        userMap.put("nickname", nickname);
+
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("users").document(userId)
+                .set(userMap)
+                .addOnSuccessListener(aVoid -> {
+                    Log.i(TAG, "User document created in Firestore for UID: " + userId);
+                    phaseDone();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to save user data to Firestore", e);
+                    phaseFailed("Failed to save user data: " + e.getMessage());
+                });
     }
 
 }

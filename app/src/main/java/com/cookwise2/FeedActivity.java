@@ -36,5 +36,17 @@ public class FeedActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+        Button buttonAddPost = findViewById(R.id.button_addPost);
+        buttonAddPost.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseAuth.getInstance().signOut();
+                Intent intent = new Intent(FeedActivity.this, AddPostActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
     }
 }
