@@ -13,13 +13,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.cookwise2.utils.PostsAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class FeedActivity extends AppCompatActivity {
     private static final String TAG = "FeedActivity";
 
     String nickname;
+    private RecyclerView recyclerView;
+    private PostsAdapter postsAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +40,7 @@ public class FeedActivity extends AppCompatActivity {
         readUserData();
         TextView tvHelloUser = findViewById(R.id.tv_hello_user);
         tvHelloUser.setText("Hello, " + nickname + " 👋");
+        initRecyclerView();
 
         Button buttonLogout = findViewById(R.id.buttonLogout);
         buttonLogout.setOnClickListener(new View.OnClickListener() {
@@ -68,5 +75,13 @@ public class FeedActivity extends AppCompatActivity {
         Log.d(TAG, "readUserData: nickname: " + nickname);
 
     }
+    private void initRecyclerView()
+    {
+        recyclerView = findViewById(R.id.recycler_posts);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        postsAdapter = new PostsAdapter();
+        recyclerView.setAdapter(postsAdapter);
+    }
+
 
 }
