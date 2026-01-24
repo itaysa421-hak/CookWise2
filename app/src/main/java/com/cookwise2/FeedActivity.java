@@ -17,12 +17,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.cookwise2.utils.PostsAdapter;
+import com.cookwise2.utils.RecipePost;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FeedActivity extends AppCompatActivity {
     private static final String TAG = "FeedActivity";
 
     String nickname;
+    List<RecipePost> posts;
     private RecyclerView recyclerView;
     private PostsAdapter postsAdapter;
 
@@ -40,7 +48,11 @@ public class FeedActivity extends AppCompatActivity {
         readUserData();
         TextView tvHelloUser = findViewById(R.id.tv_hello_user);
         tvHelloUser.setText("Hello, " + nickname + " 👋");
+
+        posts = new ArrayList<>();
+
         initRecyclerView();
+        loadPosts();
 
         Button buttonLogout = findViewById(R.id.buttonLogout);
         buttonLogout.setOnClickListener(new View.OnClickListener() {
@@ -79,9 +91,28 @@ public class FeedActivity extends AppCompatActivity {
     {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        postsAdapter = new PostsAdapter();
+        postsAdapter = new PostsAdapter(posts);
         recyclerView.setAdapter(postsAdapter);
     }
+    private void loadPosts() {
+        Log.d(TAG, "loadPosts: start");
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("posts")
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    posts.clear();
+                    Log.d(TAG, "loadPosts succeeded: " + queryDocumentSnapshots.size() + " documents");
+                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
+                        RecipePost post = doc.toObject(RecipePost.class);
+                        posts.add(post);
+                    }
+                    postsAdapter.notifyDataSetChanged();
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "Failed to load posts: " + e.getMessage()));
+    }
+
 
 
 }
