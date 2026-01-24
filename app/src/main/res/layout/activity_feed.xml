@@ -47,7 +47,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvGreeting"
+        android:id="@+id/tv_hello_user"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hello, Noa 👋"
@@ -69,7 +69,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="4dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvGreeting"/>
+        app:layout_constraintTop_toBottomOf="@id/tv_hello_user"/>
 
 
     <Button
@@ -79,7 +79,7 @@
         android:layout_marginTop="56dp"
         android:text="logout"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvGreeting" />
+        app:layout_constraintTop_toBottomOf="@id/tv_hello_user" />
 
     <Button
         android:id="@+id/button_addPost"
@@ -88,7 +88,7 @@
         android:layout_marginTop="100dp"
         android:text="add post"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvGreeting" />
+        app:layout_constraintTop_toBottomOf="@id/tv_hello_user" />
 
 
 

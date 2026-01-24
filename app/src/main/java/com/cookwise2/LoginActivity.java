@@ -1,6 +1,7 @@
 package com.cookwise2;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -10,12 +11,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "loginActivity";
@@ -84,7 +90,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.i("LoginActivity", "signInWithEmail:success");
-                        startFeedActivity(true);
+                        getUserDataFromFirestore();
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w("LoginActivity", "signInWithEmail:failure", task.getException());
@@ -109,5 +115,49 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+    private void getUserDataFromFirestore() {
+        String userId = auth.getCurrentUser().getUid();
+        FirebaseFirestore firestore = FirebaseFirestore.getInstance();
+        firestore.collection("users").document(userId).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                // User data exists, you can use it
+                                String nickname = document.getString("nickname");
+                                Log.d(TAG, "getUserDataFromFirestore onComplete: nickname: " + nickname);
+
+                                saveUserDataLocally(nickname);
+
+                                Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
+
+                                // Navigate to FeedActivity
+                                startFeedActivity(true);
+
+                            } else {
+                                // User data doesn't exist, handle accordingly
+                                Log.d(TAG, "getUserData onComplete: user data doesn't exist");
+                                Toast.makeText(LoginActivity.this, "Error getting user data", Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            // Handle errors
+                            Log.d(TAG, "getUserData onComplete: error: " + task.getException().getMessage());
+                            Toast.makeText(LoginActivity.this, "Error getting user data", Toast.LENGTH_LONG).show();
+                        }
+                    }
+
+                });
+    }
+
+    private void saveUserDataLocally(String nickname){
+        SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("nickname", nickname);
+        editor.apply();
+    }
+
 
 }
