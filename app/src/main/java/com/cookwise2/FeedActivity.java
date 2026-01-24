@@ -50,7 +50,6 @@ public class FeedActivity extends AppCompatActivity {
         buttonAddPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
                 Intent intent = new Intent(FeedActivity.this, AddPostActivity.class);
                 startActivity(intent);
             }

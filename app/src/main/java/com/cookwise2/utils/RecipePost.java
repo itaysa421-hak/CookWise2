@@ -2,7 +2,7 @@ package com.cookwise2.utils;
 
 import com.google.firebase.Timestamp;
 
-public class RecipePost {
+public class RecipePost{
     private String title;
     private String description;
     private String ownerUid;
