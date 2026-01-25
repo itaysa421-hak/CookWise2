@@ -8,7 +8,6 @@ public class RecipePost{
     private String title;
     private String description;
     private ArrayList<String> groceries;
-
     private String ownerUid;
     private String ownerNickname;
     private Timestamp createdAt;

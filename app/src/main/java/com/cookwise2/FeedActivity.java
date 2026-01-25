@@ -1,5 +1,9 @@
 package com.cookwise2;
 
+import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
+import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
+import static com.google.firebase.firestore.DocumentChange.Type.REMOVED;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,6 +13,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -19,9 +24,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.cookwise2.utils.PostsAdapter;
 import com.cookwise2.utils.RecipePost;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +61,7 @@ public class FeedActivity extends AppCompatActivity {
         posts = new ArrayList<>();
 
         initRecyclerView();
-        loadPosts();
+        registerToNewPosts();
 
         Button buttonLogout = findViewById(R.id.buttonLogout);
         buttonLogout.setOnClickListener(new View.OnClickListener() {
@@ -94,24 +103,43 @@ public class FeedActivity extends AppCompatActivity {
         postsAdapter = new PostsAdapter(posts);
         recyclerView.setAdapter(postsAdapter);
     }
-    private void loadPosts() {
-        Log.d(TAG, "loadPosts: start");
+
+
+    private void registerToNewPosts() {
+        Log.d(TAG, "registerToNewPosts: start");
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("posts")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    posts.clear();
-                    Log.d(TAG, "loadPosts succeeded: " + queryDocumentSnapshots.size() + " documents");
-                    for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
-                        RecipePost post = doc.toObject(RecipePost.class);
-                        posts.add(post);
+                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot snapshots,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w(TAG, "listen:error", e);
+                            return;
+                        }
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            switch (dc.getType()) {
+                                case ADDED:
+                                    Log.d(TAG, "New post: " + dc.getDocument().getData());
+                                    RecipePost post = dc.getDocument().toObject(RecipePost.class);
+                                    posts.addFirst(post);
+                                    break;
+                                case MODIFIED:
+                                    Log.d(TAG, "Modified post: " + dc.getDocument().getData());
+                                    break;
+                                case REMOVED:
+                                    Log.d(TAG, "Removed post: " + dc.getDocument().getData());
+                                    break;
+                            }
+                        }
+                        postsAdapter.notifyDataSetChanged();
                     }
-                    postsAdapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "Failed to load posts: " + e.getMessage()));
+                });
     }
+
 
 
 
