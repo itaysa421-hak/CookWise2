@@ -6,8 +6,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,7 +24,10 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import com.cookwise2.utils.RecipePost;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -28,6 +35,8 @@ public class AddPostActivity extends AppCompatActivity {
 
     TextView title;
     TextView content;
+    private LinearLayout ingredientsContainer;
+    private Button btnAddIngredient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +52,15 @@ public class AddPostActivity extends AppCompatActivity {
         title = findViewById(R.id.etPostTitle);
         content = findViewById(R.id.etPostContent);
 
+        ingredientsContainer = findViewById(R.id.ingredientsContainer);
+        btnAddIngredient = findViewById(R.id.btnAddIngredient);
+
+        btnAddIngredient.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                addNewRow();
+            }
+        });
 
         Button btnPublish = findViewById(R.id.btnPublish);
         btnPublish.setOnClickListener(new View.OnClickListener() {
@@ -77,6 +95,7 @@ public class AddPostActivity extends AppCompatActivity {
         String titleStr = this.title.getText().toString();
         String description = this.content.getText().toString();
         String ownerId =  FirebaseAuth.getInstance().getCurrentUser().getUid();
+        ArrayList<String> groceries = collectIngredients();
 
 
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
@@ -85,10 +104,49 @@ public class AddPostActivity extends AppCompatActivity {
 
         Timestamp createdAt = new Timestamp(new Date());
 
-        return new RecipePost(titleStr, description, ownerId, nickname, createdAt);
+        return new RecipePost(titleStr, groceries , ownerId, nickname, createdAt);
 
 
 
 
+    }
+    private void addNewRow() {
+        // 1. ניפוח (Inflate) של קובץ השורה הבודדת
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View rowView = inflater.inflate(R.layout.row_ingredient, null);
+
+        // 2. מציאת כפתור המחיקה בתוך השורה החדשה שנוצרה
+        ImageButton btnRemove = rowView.findViewById(R.id.btnRemoveIngredient);
+
+        // 3. הגדרת פעולת המחיקה
+        btnRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ingredientsContainer.removeView(rowView);
+            }
+        });
+
+        // 4. הוספת השורה למכולה הראשית במסך
+        ingredientsContainer.addView(rowView);
+    }
+    private ArrayList<String> collectIngredients() {
+        ArrayList<String> ingredientsList = new ArrayList<>();
+
+        // מעבר על כל ה"ילדים" (השורות) בתוך ה-Container
+        for (int i = 0; i < ingredientsContainer.getChildCount(); i++) {
+            View row = ingredientsContainer.getChildAt(i);
+            EditText etIngredient = row.findViewById(R.id.etIngredientName);
+
+            String ingredientText = etIngredient.getText().toString().trim();
+
+            if (!ingredientText.isEmpty()) {
+                ingredientsList.add(ingredientText);
+            }
+        }
+
+        return ingredientsList;
+
+        // עכשיו יש לך רשימה מוכנה! אפשר לשלוח אותה ל-Firebase או להציג אותה
+        // Log.d("RecipeApp", "Ingredients: " + ingredientsList.toString());
     }
 }

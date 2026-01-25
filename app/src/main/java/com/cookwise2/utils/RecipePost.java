@@ -2,18 +2,22 @@ package com.cookwise2.utils;
 
 import com.google.firebase.Timestamp;
 
+import java.util.ArrayList;
+
 public class RecipePost{
     private String title;
     private String description;
+    private ArrayList<String> groceries;
+
     private String ownerUid;
     private String ownerNickname;
     private Timestamp createdAt;
 
     public RecipePost() {}
 
-    public RecipePost(String title, String description, String ownerUid, String ownerNickname,Timestamp createdAt) {
+    public RecipePost(String title, ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
         this.title = title;
-        this.description = description;
+        this.groceries = groceries;
         this.ownerUid = ownerUid;
         this.ownerNickname = ownerNickname;
         this.createdAt = createdAt;
@@ -29,4 +33,5 @@ public class RecipePost{
     public void setOwnerUid(String ownerUid) { this.ownerUid = ownerUid; }
     public String getOwnerNickname() { return ownerNickname; }
     public void setOwnerNickname(String ownerNickname) { this.ownerNickname = ownerNickname; }
+    public ArrayList<String> getGroceries(){return groceries;}
 }

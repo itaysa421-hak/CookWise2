@@ -16,6 +16,7 @@ import com.cookwise2.R;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -44,7 +45,9 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         RecipePost post = posts.get(position);
 
         holder.titleTextView.setText(post.getTitle());
-        holder.descriptionTextView.setText(post.getDescription());
+//        holder.descriptionTextView.setText(post.getDescription());
+        holder.groceries.setText(listGroceriesToString(post));
+
         holder.ownerTextView.setText(post.getOwnerNickname());
         holder.createdAtTextView.setText(timestampToString(post.getCreatedAt()));
         String profilePicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
@@ -54,12 +57,29 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 .load(profilePictureUrl)
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .centerCrop()
-                .into(holder.iv_post_image);    }
+                .into(holder.iv_post_image);
+    }
 
     @Override
     public int getItemCount() {
         Log.d(TAG, "getItemCount: " + posts.size());
         return posts.size();
+    }
+    public String listGroceriesToString(RecipePost post){
+
+        ArrayList<String> arrayPost = post.getGroceries();
+        String str = "";
+
+        if(arrayPost ==  null)
+            return str;
+        for (int i = 0; i<arrayPost.size() ; i++){
+
+            str += arrayPost.get(i);
+            if(i < arrayPost.size() -1)
+                str += ", ";
+        }
+
+        return str;
     }
 
     private String timestampToString(Timestamp timestamp) {
@@ -86,6 +106,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
         TextView titleTextView;
         TextView descriptionTextView;
+        TextView groceries;
         TextView ownerTextView;
         TextView createdAtTextView;
         ImageView iv_post_image;
@@ -95,7 +116,8 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.tv_post_title);
-            descriptionTextView = itemView.findViewById(R.id.tv_post_description);
+//            descriptionTextView = itemView.findViewById(R.id.tv_post_description);
+            groceries = itemView.findViewById(R.id.tv_post_ingredients);
             ownerTextView = itemView.findViewById(R.id.tv_post_owner);
             createdAtTextView = itemView.findViewById(R.id.tv_post_created_at);
             iv_post_image = itemView.findViewById(R.id.iv_post_image);
