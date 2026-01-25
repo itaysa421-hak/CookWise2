@@ -15,9 +15,10 @@ public class RecipePost{
 
     public RecipePost() {}
 
-    public RecipePost(String title, ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
+    public RecipePost(String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
         this.title = title;
         this.groceries = groceries;
+        this.description = description;
         this.ownerUid = ownerUid;
         this.ownerNickname = ownerNickname;
         this.createdAt = createdAt;

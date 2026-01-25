@@ -104,7 +104,7 @@ public class AddPostActivity extends AppCompatActivity {
 
         Timestamp createdAt = new Timestamp(new Date());
 
-        return new RecipePost(titleStr, groceries , ownerId, nickname, createdAt);
+        return new RecipePost(titleStr, description, groceries , ownerId, nickname, createdAt);
 
 
 

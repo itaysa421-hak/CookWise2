@@ -82,5 +82,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
             tools:text="רכיבים: עגבנייה, בצל, שום, פסטה, שמנת לבישול..." />
+        <TextView
+            android:id="@+id/tv_post_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:ellipsize="end"
+            android:maxLines="3"
+            android:lineSpacingExtra="2dp"
+            android:textColor="#616161"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_post_ingredients"
+            tools:text="מרתיחים מים עם מלח, מטגנים את הבצל עד להזהבה ומוסיפים את הפטריות..." />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>
