@@ -5,21 +5,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="12dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    app:strokeWidth="0dp">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#F0F0F0">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="16dp">
+        android:layout_height="wrap_content">
 
         <ImageView
             android:id="@+id/iv_post_image"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:scaleType="centerCrop"
+            android:background="#F5F5F5"
             app:layout_constraintDimensionRatio="H,16:9"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -27,75 +29,81 @@
             tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
         <TextView
+            android:id="@+id/tv_post_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#1A1A1A"
+            android:textSize="20sp"
+            android:fontFamily="sans-serif-black"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/iv_post_image"
+            tools:text="Creamy Mushroom Pasta" />
+
+        <TextView
             android:id="@+id/tv_post_owner"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
-            android:textColor="@color/material_dynamic_primary50"
-            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/CornflowerBlue"
+            android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/iv_post_image"
-            tools:text="שף ישראל ישראלי" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
+            tools:text="Chef Israel Israeli" />
 
         <TextView
             android:id="@+id/tv_post_created_at"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:alpha="0.6"
+            android:layout_marginStart="6dp"
+            android:alpha="0.5"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="@+id/tv_post_owner"
             app:layout_constraintStart_toEndOf="@+id/tv_post_owner"
             app:layout_constraintTop_toTopOf="@+id/tv_post_owner"
-            tools:text="• לפני שעתיים" />
-
-        <TextView
-            android:id="@+id/tv_post_title"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#212121"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_owner"
-            tools:text="פסטה ברוטב שמנת פטריות מושלם" />
+            tools:text="• 2h ago" />
 
         <TextView
             android:id="@+id/tv_post_ingredients"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_ingredients_section"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
             android:ellipsize="end"
-            android:maxLines="2"
-            android:textColor="#4CAF50"
-            android:textSize="14sp"
-            android:textStyle="italic"
+            android:maxLines="1"
+            android:textColor="#455A64"
+            android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
-            tools:text="רכיבים: עגבנייה, בצל, שום, פסטה, שמנת לבישול..." />
+            app:layout_constraintTop_toBottomOf="@+id/tv_post_owner"
+            tools:text="Ingredients: Tomato, Onion, Garlic, Pasta..." />
+
         <TextView
             android:id="@+id/tv_post_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="16dp"
             android:ellipsize="end"
-            android:maxLines="3"
-            android:lineSpacingExtra="2dp"
-            android:textColor="#616161"
+            android:maxLines="2"
+            android:lineSpacingExtra="4dp"
+            android:textColor="#666666"
             android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_post_ingredients"
-            tools:text="מרתיחים מים עם מלח, מטגנים את הבצל עד להזהבה ומוסיפים את הפטריות..." />
+            tools:text="Boil water with salt, fry the onion until golden and add the mushrooms..." />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

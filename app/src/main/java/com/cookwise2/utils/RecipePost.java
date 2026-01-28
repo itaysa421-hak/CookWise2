@@ -2,16 +2,17 @@ package com.cookwise2.utils;
 
 import com.google.firebase.Timestamp;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class RecipePost{
+public class RecipePost implements java.io.Serializable {
+    private static final long serialVersionUID = 1L;
     private String title;
     private String description;
     private ArrayList<String> groceries;
     private String ownerUid;
     private String ownerNickname;
-    private Timestamp createdAt;
-
+    private long createdAtMillis;
     public RecipePost() {}
 
     public RecipePost(String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
@@ -20,13 +21,14 @@ public class RecipePost{
         this.description = description;
         this.ownerUid = ownerUid;
         this.ownerNickname = ownerNickname;
-        this.createdAt = createdAt;
+        this.createdAtMillis = createdAt.toDate().getTime();
     }
+
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public Timestamp getCreatedAt() { return new Timestamp(new java.util.Date(createdAtMillis)); }
+    public void setCreatedAt(Timestamp createdAt) { this.createdAtMillis = createdAt.toDate().getTime(); }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public String getOwnerUid() { return ownerUid; }

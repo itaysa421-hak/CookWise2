@@ -25,10 +25,18 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     private static final String TAG = "PostsAdapter";
     private List<RecipePost> posts;
+    // שלב 1: הגדרת המשתנה של המאזין
+    private OnItemClickListener listener;
 
+    // שלב 2: הגדרת ה-Interface ללחיצה
+    public interface OnItemClickListener {
+        void onItemClick(RecipePost post);
+    }
 
-    public PostsAdapter(List<RecipePost> posts) {
+    // שלב 3: עדכון הבנאי (Constructor) שיקבל גם את המאזין
+    public PostsAdapter(List<RecipePost> posts, OnItemClickListener listener) {
         this.posts = posts;
+        this.listener = listener;
     }
 
     @NonNull
@@ -49,6 +57,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.groceries.setText(listGroceriesToString(post));
         holder.ownerTextView.setText(post.getOwnerNickname());
         holder.createdAtTextView.setText(timestampToString(post.getCreatedAt()));
+
         String profilePicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
         String profilePictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(profilePicturePath);
 
@@ -57,6 +66,13 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .centerCrop()
                 .into(holder.iv_post_image);
+
+        // שלב 4: הגדרת לחיצה על כל פריט ברשימה
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(post);
+            }
+        });
     }
 
     @Override
@@ -64,53 +80,41 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         Log.d(TAG, "getItemCount: " + posts.size());
         return posts.size();
     }
-    public String listGroceriesToString(RecipePost post){
 
+    public String listGroceriesToString(RecipePost post){
         ArrayList<String> arrayPost = post.getGroceries();
         String str = "";
 
         if(arrayPost ==  null)
             return str;
-        for (int i = 0; i<arrayPost.size() ; i++){
-
+        for (int i = 0; i < arrayPost.size() ; i++){
             str += arrayPost.get(i);
-            if(i < arrayPost.size() -1)
+            if(i < arrayPost.size() - 1)
                 str += ", ";
         }
-
         return str;
     }
 
     private String timestampToString(Timestamp timestamp) {
-
         Date messageDate = timestamp.toDate();
-
         boolean isToday = DateUtils.isToday(messageDate.getTime());
 
         SimpleDateFormat fmt;
         if (isToday) {
-            // only show hour:minute, e.g. "14:35"
             fmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
         } else {
-            // only show date, e.g. "Aug 03, 2025"
             fmt = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
         }
-
         return fmt.format(messageDate);
     }
 
-
-
     static class PostViewHolder extends RecyclerView.ViewHolder {
-
         TextView titleTextView;
         TextView descriptionTextView;
         TextView groceries;
         TextView ownerTextView;
         TextView createdAtTextView;
         ImageView iv_post_image;
-
-
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -120,9 +124,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             ownerTextView = itemView.findViewById(R.id.tv_post_owner);
             createdAtTextView = itemView.findViewById(R.id.tv_post_created_at);
             iv_post_image = itemView.findViewById(R.id.iv_post_image);
-
-
         }
     }
 }
-

@@ -100,7 +100,14 @@ public class FeedActivity extends AppCompatActivity {
     {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        postsAdapter = new PostsAdapter(posts);
+        postsAdapter = new PostsAdapter(posts, new PostsAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(RecipePost post) {
+                Intent intent = new Intent(FeedActivity.this, RecipeDetailsActivity.class);
+                intent.putExtra("RECIPE_POST", post); // מעביר את כל המתכון למסך הבא
+                startActivity(intent);
+            }
+        });
         recyclerView.setAdapter(postsAdapter);
     }
 
