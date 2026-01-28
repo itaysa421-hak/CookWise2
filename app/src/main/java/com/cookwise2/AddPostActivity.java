@@ -4,6 +4,7 @@ import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,16 +12,22 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
+import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -35,6 +42,9 @@ public class AddPostActivity extends AppCompatActivity {
 
     TextView title;
     TextView content;
+    MaterialCardView cardRecipeImage;
+    private Uri selectedImageUri;
+    private ImageView ivRecipeImage;
     private LinearLayout ingredientsContainer;
     private Button btnAddIngredient;
 
@@ -51,9 +61,18 @@ public class AddPostActivity extends AppCompatActivity {
 
         title = findViewById(R.id.etPostTitle);
         content = findViewById(R.id.etPostContent);
-
         ingredientsContainer = findViewById(R.id.ingredientsContainer);
         btnAddIngredient = findViewById(R.id.btnAddIngredient);
+
+        ivRecipeImage = findViewById(R.id.ivRecipeImage);
+        MaterialCardView cardRecipeImage = findViewById(R.id.cardRecipeImage);
+
+        cardRecipeImage.setOnClickListener(v -> {
+            // פתיחת גלריית התמונות של אנדרואיד
+            pickMedia.launch(new PickVisualMediaRequest.Builder()
+                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                    .build());
+        });
 
         btnAddIngredient.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,6 +80,7 @@ public class AddPostActivity extends AppCompatActivity {
                 addNewRow();
             }
         });
+
 
         Button btnPublish = findViewById(R.id.btnPublish);
         btnPublish.setOnClickListener(new View.OnClickListener() {
@@ -73,6 +93,8 @@ public class AddPostActivity extends AppCompatActivity {
     public void sendPost(){
         Log.d(TAG, "sendPost: start");
         RecipePost post = createRecipePost();
+
+
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("posts")
@@ -149,4 +171,15 @@ public class AddPostActivity extends AppCompatActivity {
         // עכשיו יש לך רשימה מוכנה! אפשר לשלוח אותה ל-Firebase או להציג אותה
         // Log.d("RecipeApp", "Ingredients: " + ingredientsList.toString());
     }
+    private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri != null) {
+                    selectedImageUri = uri;
+                    // הצגת התמונה שנבחרה בתוך ה-ImageView
+                    Glide.with(this).load(uri).centerCrop().into(ivRecipeImage);
+                    Log.d("PhotoPicker", "Selected URI: " + uri);
+                } else {
+                    Log.d("PhotoPicker", "No media selected");
+                }
+            });
 }

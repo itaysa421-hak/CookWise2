@@ -28,6 +28,7 @@ public class RegistrationActivity extends AppCompatActivity {
     UserImageSelector userImageSelector;
 
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
