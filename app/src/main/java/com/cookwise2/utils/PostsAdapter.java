@@ -58,14 +58,29 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.ownerTextView.setText(post.getOwnerNickname());
         holder.createdAtTextView.setText(timestampToString(post.getCreatedAt()));
 
-        String profilePicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
-        String profilePictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(profilePicturePath);
+        if(post.getPostId() == null)
+        {
+            Log.d(TAG, "onBindViewHolder: post id is null");
+            String postPicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
+            String potPictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(postPicturePath);
 
-        Glide.with(holder.itemView)
-                .load(profilePictureUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .centerCrop()
-                .into(holder.iv_post_image);
+            Glide.with(holder.itemView)
+                    .load(potPictureUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .centerCrop()
+                    .into(holder.iv_post_image);
+        }
+        else {
+            String postPicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
+            String potPictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(postPicturePath);
+
+            Glide.with(holder.itemView)
+                    .load(potPictureUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .centerCrop()
+                    .into(holder.iv_post_image);
+        }
+
 
         // שלב 4: הגדרת לחיצה על כל פריט ברשימה
         holder.itemView.setOnClickListener(v -> {

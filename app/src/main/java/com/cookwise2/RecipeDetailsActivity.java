@@ -50,7 +50,7 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         tvDetailIngredients.setText(formatIngredientsList(post.getGroceries()));
 
         // טעינת תמונת הפרופיל/פוסט באמצעות Glide (לפי הלוגיקה שלך מה-Adapter)
-        String profilePicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
+        String profilePicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
         String imageUrl = SupabaseStorageHelper.getFileSupabaseUrl(profilePicturePath);
 
         Glide.with(this)

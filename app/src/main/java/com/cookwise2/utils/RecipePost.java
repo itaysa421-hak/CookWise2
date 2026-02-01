@@ -13,15 +13,17 @@ public class RecipePost implements java.io.Serializable {
     private String ownerUid;
     private String ownerNickname;
     private long createdAtMillis;
+    private String postId;
     public RecipePost() {}
 
-    public RecipePost(String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
+    public RecipePost(String postId,String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
         this.title = title;
         this.groceries = groceries;
         this.description = description;
         this.ownerUid = ownerUid;
         this.ownerNickname = ownerNickname;
         this.createdAtMillis = createdAt.toDate().getTime();
+        this.postId = postId;
     }
 
 
@@ -36,4 +38,5 @@ public class RecipePost implements java.io.Serializable {
     public String getOwnerNickname() { return ownerNickname; }
     public void setOwnerNickname(String ownerNickname) { this.ownerNickname = ownerNickname; }
     public ArrayList<String> getGroceries(){return groceries;}
+    public String getPostId(){return postId;}
 }

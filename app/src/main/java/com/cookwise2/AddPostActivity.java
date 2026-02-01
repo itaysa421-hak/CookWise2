@@ -27,13 +27,17 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.cookwise2.utils.SupabaseStorageHelper;
+import com.cookwise2.utils.UserImageSelector;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import com.cookwise2.utils.RecipePost;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -43,10 +47,13 @@ public class AddPostActivity extends AppCompatActivity {
     TextView title;
     TextView content;
     MaterialCardView cardRecipeImage;
-    private Uri selectedImageUri;
     private ImageView ivRecipeImage;
+    UserImageSelector userImageSelector;
+
     private LinearLayout ingredientsContainer;
     private Button btnAddIngredient;
+    private String postId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,19 +67,23 @@ public class AddPostActivity extends AppCompatActivity {
         });
 
         title = findViewById(R.id.etPostTitle);
+
         content = findViewById(R.id.etPostContent);
         ingredientsContainer = findViewById(R.id.ingredientsContainer);
         btnAddIngredient = findViewById(R.id.btnAddIngredient);
 
         ivRecipeImage = findViewById(R.id.ivRecipeImage);
-        MaterialCardView cardRecipeImage = findViewById(R.id.cardRecipeImage);
 
-        cardRecipeImage.setOnClickListener(v -> {
-            // פתיחת גלריית התמונות של אנדרואיד
-            pickMedia.launch(new PickVisualMediaRequest.Builder()
-                    .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
-                    .build());
+
+        userImageSelector = new UserImageSelector(this, ivRecipeImage);
+        cardRecipeImage = findViewById(R.id.cardRecipeImage);
+        cardRecipeImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                userImageSelector.showImageSourceDialog();
+            }
         });
+
 
         btnAddIngredient.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,14 +130,17 @@ public class AddPostActivity extends AppCompatActivity {
         String ownerId =  FirebaseAuth.getInstance().getCurrentUser().getUid();
         ArrayList<String> groceries = collectIngredients();
 
+        Random rnd = new Random();
+        postId = title.getText().toString() + String.valueOf(rnd.nextInt(1000000000));
+
 
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
         // nickname - "N/A" is a default value if nickname is not found in the file
         String nickname = sharedPreferences.getString("nickname", "N/A");
 
         Timestamp createdAt = new Timestamp(new Date());
-
-        return new RecipePost(titleStr, description, groceries , ownerId, nickname, createdAt);
+        uploadProfilePictureToSupabase();
+        return new RecipePost(postId,titleStr, description, groceries , ownerId, nickname, createdAt);
 
 
 
@@ -171,15 +185,27 @@ public class AddPostActivity extends AppCompatActivity {
         // עכשיו יש לך רשימה מוכנה! אפשר לשלוח אותה ל-Firebase או להציג אותה
         // Log.d("RecipeApp", "Ingredients: " + ingredientsList.toString());
     }
-    private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                if (uri != null) {
-                    selectedImageUri = uri;
-                    // הצגת התמונה שנבחרה בתוך ה-ImageView
-                    Glide.with(this).load(uri).centerCrop().into(ivRecipeImage);
-                    Log.d("PhotoPicker", "Selected URI: " + uri);
+    private void uploadProfilePictureToSupabase() {
+        File imageFile = userImageSelector.createImageFile();
+
+        if (imageFile == null) {
+            Log.d(TAG, "uploadProfilePictureToSupabase: no image file provided");
+
+            return;
+        }
+
+        String filename = "images/post-pic/" + postId + ".jpg";
+        Log.i(TAG, "Uploading file to Supabase: " + filename);
+
+        SupabaseStorageHelper.uploadPicture(imageFile, filename, new SupabaseStorageHelper.OnResultCallback() {
+            @Override
+            public void onResult(boolean success, String url, String error) {
+                if (success) {
+                    Log.i(TAG, "Profile picture uploaded successfully to Supabase. Public URL: " + url);
                 } else {
-                    Log.d("PhotoPicker", "No media selected");
+                    Log.e(TAG, "Supabase upload failed: " + error);
                 }
-            });
+            }
+        });
+    }
 }
