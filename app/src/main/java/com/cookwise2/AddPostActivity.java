@@ -131,7 +131,7 @@ public class AddPostActivity extends AppCompatActivity {
         ArrayList<String> groceries = collectIngredients();
 
         Random rnd = new Random();
-        postId = title.getText().toString() + String.valueOf(rnd.nextInt(1000000000));
+        postId = ownerId + "-" + String.valueOf(rnd.nextInt(1000000000));
 
 
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
