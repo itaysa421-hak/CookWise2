@@ -38,8 +38,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -47,5 +45,22 @@ dependencies {
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation (libs.okhttp)
+    // BOM
+    implementation(platform(libs.firebase.bom))
+
+
+// Firebase (ללא גרסאות)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.ai)
+
+
+// One-shot (Guava ListenableFuture)
+    implementation(libs.guava)
+
+
+// Streaming (Reactive Streams Publisher)
+    implementation(libs.reactive.streams)
+
 
 }
