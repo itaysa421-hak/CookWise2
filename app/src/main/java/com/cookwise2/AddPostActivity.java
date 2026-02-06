@@ -27,6 +27,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
+import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.SupabaseStorageHelper;
 import com.cookwise2.utils.UserImageSelector;
 import com.google.android.material.card.MaterialCardView;
@@ -207,5 +208,52 @@ public class AddPostActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+    private String groceriesToString(ArrayList<String> groceries)
+    {
+        String str = "";
+        if(groceries ==  null)
+            return str;
+        for (int i = 0; i < groceries.size() ; i++){
+            str += groceries.get(i);
+            if(i < groceries.size() - 1)
+                str += ", ";
+        }
+        return str;
+    }
+
+
+    private String getPrompt(String title, String description, ArrayList<String> groceries){
+
+        String ingredients = groceriesToString(groceries);
+        String prompt = "Act as a professional culinary data analyst. Analyze the following recipe details and return EXACTLY one JSON object.\n" +
+                "\n" +
+                "RECIPE DETAILS:\n" +
+                "Title: ["+title+"]\n" +
+                "Ingredients: ["+ingredients+"]\n" +
+                "Instructions: ["+description+"]\n" +
+                "\n" +
+                "STRICT JSON SCHEMA:\n" +
+                "{\n" +
+                "  \"difficulty\": \"Easy\" | \"Medium\" | \"Hard\" | \"none\",\n" +
+                "  \"estimated_time\": number | \"none\", \n" +
+                "  \"meal_type\": \"Breakfast\" | \"Lunch\" | \"Dinner\" | \"Dessert\" | \"Snack\" | \"none\",\n" +
+                "  \"dietary_info\": \"Vegan\" | \"Vegetarian\" | \"Gluten-Free\" | \"Dairy-Free\" | \"Meat\" | \"none\",\n" +
+                "  \"spiciness\": 0 | 1 | 2 | 3 | \"none\", \n" +
+                "  \"cooking_method\": \"Baking\" | \"Frying\" | \"Slow Cooking\" | \"No-Cook\" | \"Boiling\" | \"none\",\n" +
+                "  \"cuisine\": \"Italian\" | \"Asian\" | \"Mediterranean\" | \"Middle Eastern\" | \"American\" | \"Other\" | \"none\",\n" +
+                "  \"budget_friendly\": \"Cheap\" | \"Standard\" | \"Expensive\" | \"none\",\n" +
+                "  \"health_score\": number | \"none\", \n" +
+                "  \"target_audience\": \"Kids\" | \"Hosting\" | \"Students\" | \"Quick Meal\" | \"none\"\n" +
+                "}\n" +
+                "\n" +
+                "IMPORTANT RULES:\n" +
+                "1. Return ONLY the JSON object. No preamble, no markdown code blocks, and no closing remarks.\n" +
+                "2. CRITICAL: If you cannot confidently determine a value for a field based on the provided information, do NOT guess. Set the value to \"none\".\n" +
+                "3. Analyze the \"Instructions\" carefully to determine the \"cooking_method\" and \"estimated_time\".\n" +
+                "4. Use English for all string values.\n" +
+                "5. Ensure the output is valid JSON.";
+        return prompt;
+
     }
 }

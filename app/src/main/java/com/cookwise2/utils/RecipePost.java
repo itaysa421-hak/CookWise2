@@ -14,6 +14,7 @@ public class RecipePost implements java.io.Serializable {
     private String ownerNickname;
     private long createdAtMillis;
     private String postId;
+    private java.util.Map<String, Object> classification;
     public RecipePost() {}
 
     public RecipePost(String postId,String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
@@ -26,7 +27,10 @@ public class RecipePost implements java.io.Serializable {
         this.postId = postId;
     }
 
-
+    public java.util.Map<String, Object> getClassification() { return classification; }
+    public void setClassification(java.util.Map<String, Object> classification) {
+        this.classification = classification;
+    }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public Timestamp getCreatedAt() { return new Timestamp(new java.util.Date(createdAtMillis)); }
