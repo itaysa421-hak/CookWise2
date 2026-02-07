@@ -107,32 +107,15 @@ public class AddPostActivity extends AppCompatActivity {
             }
         });
     }
-    public void sendPost(){
+    public void sendPost() {
         Log.d(TAG, "sendPost: start");
-        RecipePost post = createRecipePost();
 
+        // יצירת ID מראש כדי שישמש את כל השלבים
+        Random rnd = new Random();
+        this.postId = FirebaseAuth.getInstance().getCurrentUser().getUid() + "-" + rnd.nextInt(1000000000);
 
-
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("posts")
-                .add(post)
-                .addOnSuccessListener(documentReference -> {
-                    String newPostId = documentReference.getId(); // לוקחים את ה-ID האמיתי ש-Firestore יצר
-                    Log.d(TAG, "DocumentSnapshot written with ID: " + newPostId);
-                    Toast.makeText(AddPostActivity.this, "Post published successfully!", Toast.LENGTH_SHORT).show();
-                    this.postId = newPostId;
-
-                    geminiTagging(newPostId);
-
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "Error adding document", e);
-                    Toast.makeText(AddPostActivity.this, "Error saving log: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-        Log.d(TAG, "sendPost: done");
-
-
-
+        // התחלת השרשרת: קודם תמונה, אחר כך השאר
+        uploadImageAndThenPublish();
     }
 
     public RecipePost createRecipePost(){
@@ -141,8 +124,7 @@ public class AddPostActivity extends AppCompatActivity {
         String ownerId =  FirebaseAuth.getInstance().getCurrentUser().getUid();
         ArrayList<String> groceries = collectIngredients();
 
-        Random rnd = new Random();
-        this.postId = ownerId + "-" + String.valueOf(rnd.nextInt(1000000000));
+
 
 
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
@@ -150,7 +132,7 @@ public class AddPostActivity extends AppCompatActivity {
         String nickname = sharedPreferences.getString("nickname", "N/A");
 
         Timestamp createdAt = new Timestamp(new Date());
-        uploadProfilePictureToSupabase();
+//        uploadProfilePictureToSupabase();
         return new RecipePost(postId,titleStr, description, groceries , ownerId, nickname, createdAt);
 
 
@@ -196,12 +178,12 @@ public class AddPostActivity extends AppCompatActivity {
         // עכשיו יש לך רשימה מוכנה! אפשר לשלוח אותה ל-Firebase או להציג אותה
         // Log.d("RecipeApp", "Ingredients: " + ingredientsList.toString());
     }
-    private void uploadProfilePictureToSupabase() {
+    private void uploadImageAndThenPublish() {
         File imageFile = userImageSelector.createImageFile();
 
+        // אם המשתמש לא בחר תמונה, עוברים ישר לפרסום הפוסט
         if (imageFile == null) {
-            Log.d(TAG, "uploadProfilePictureToSupabase: no image file provided");
-
+            finishPublishing(null); // null אומר שאין URL לתמונה
             return;
         }
 
@@ -212,27 +194,76 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onResult(boolean success, String url, String error) {
                 if (success) {
-                    Log.i(TAG, "Profile picture uploaded successfully to Supabase. Public URL: " + url);
+                    Log.i(TAG, "Image uploaded successfully: " + url);
+                    finishPublishing(url); // ממשיכים עם ה-URL שקיבלנו
                 } else {
                     Log.e(TAG, "Supabase upload failed: " + error);
+                    // גם אם התמונה נכשלה, כנראה תרצה שהפוסט יעלה בכל זאת
+                    finishPublishing(null);
                 }
             }
         });
     }
+    private void finishPublishing(String imageUrl) {
+        RecipePost post = createRecipePost();
+        // כאן תוכל להוסיף את ה-imageUrl לאובייקט הפוסט אם הוספת שדה כזה במחלקה
+        post.setImageUrl(imageUrl);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("posts")
+                .add(post)
+                .addOnSuccessListener(documentReference -> {
+                    String newPostId = documentReference.getId();
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("postId", newPostId);
+                    if (imageUrl != null) {
+                        updates.put("imageUrl", imageUrl); // חשוב: שם השדה שבו ה-Adapter מחפש
+                    }
+
+                    documentReference.update(updates);
+                    geminiTaggingInBackground(newPostId, post);
+
+                    Toast.makeText(AddPostActivity.this, "המתכון עלה בהצלחה!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(AddPostActivity.this, FeedActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Error adding document", e);
+                    Toast.makeText(AddPostActivity.this, "שגיאה בפרסום הפוסט", Toast.LENGTH_SHORT).show();
+                });
+    }
     private Map<String, Object> parseJsonToMap(String jsonString) {
         Map<String, Object> map = new HashMap<>();
         try {
-            // ניקוי תגיות Markdown אם Gemini הוסיף אותן (לפעמים הוא מוסיף ```json )
             String cleanedJson = jsonString.replaceAll("```json|```", "").trim();
             JSONObject jsonObject = new JSONObject(cleanedJson);
             Iterator<String> keys = jsonObject.keys();
 
             while (keys.hasNext()) {
                 String key = keys.next();
-                map.put(key, jsonObject.get(key));
+                Object value = jsonObject.get(key);
+
+                // המרה לסוגים בסיסיים כדי ש-Firestore לא יתבלבל
+                if (value instanceof String) {
+                    map.put(key, value.toString());
+                } else if (value instanceof Integer) {
+                    map.put(key, (Integer) value);
+                } else if (value instanceof Boolean) {
+                    map.put(key, (Boolean) value);
+                } else if (value instanceof Double) {
+                    map.put(key, (Double) value);
+                } else if (value instanceof Long) {
+                    map.put(key, (Long) value);
+                } else {
+                    // לכל מקרה אחר, שמור כטקסט
+                    map.put(key, value.toString());
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Parsing error: " + e.getMessage());
         }
         return map;
     }
@@ -249,66 +280,36 @@ public class AddPostActivity extends AppCompatActivity {
         return str;
     }
 
-    private void geminiTagging(String documentId) {
-        // בניית הפרומפט בעזרת הפונקציות שבנינו
-        String recipeTitle = title.getText().toString();
-        String recipeInstructions = content.getText().toString();
-        ArrayList<String> ingredientsStr = collectIngredients();
-
-        String prompt = getPrompt(recipeTitle, recipeInstructions, ingredientsStr);
+    private void geminiTaggingInBackground(String documentId, RecipePost post) {
+        // הכנת הפרומפט מהאובייקט שכבר קיים (לא מה-EditText כי הם יושמדו)
+        String prompt = getPrompt(post.getTitle(), post.getDescription(), post.getGroceries());
 
         GeminiManager gemini = GeminiManager.getInstance();
 
-        // מומלץ להציג ProgressBar כאן אם יש לך
-
-        gemini.sendText(prompt, this, new GeminiManager.GeminiCallback() {
+        // חשוב: משתמשים ב-getApplicationContext()
+        gemini.sendText(prompt, getApplicationContext(), new GeminiManager.GeminiCallback() {
             @Override
             public void onSuccess(String result) {
-                // 1. ניקוי התוצאה (מסיר תגיות Markdown של JSON אם קיימות)
                 String cleanedJson = result.replace("```json", "").replace("```", "").trim();
-
-                Log.d(TAG, "Cleaned JSON: " + cleanedJson);
-
                 try {
-                    // 2. המרה למפה (כאן יכולה להיות שגיאת Parsing אם ה-JSON לא תקין)
                     Map<String, Object> newMap = parseJsonToMap(cleanedJson);
-
-                    if (newMap == null || newMap.isEmpty()) {
-                        Log.e(TAG, "Parsing failed: Map is empty");
-                        return;
+                    if (newMap != null && !newMap.isEmpty()) {
+                        FirebaseFirestore.getInstance().collection("posts").document(documentId)
+                                .update("classification", newMap)
+                                .addOnSuccessListener(aVoid -> Log.d(TAG, "AI Tagging completed for: " + documentId))
+                                .addOnFailureListener(e -> Log.e(TAG, "AI Tagging failed in background", e));
                     }
-
-                    // 3. עדכון Firestore
-                    FirebaseFirestore db = FirebaseFirestore.getInstance();
-                    db.collection("posts").document(documentId)
-                            .update("classification", newMap)
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Classification updated successfully for post: " + postId);
-                                // כאן אפשר להסתיר את ה-ProgressBar או לעדכן את ה-UI
-
-                                Toast.makeText(AddPostActivity.this, "Classification updated successfully!", Toast.LENGTH_SHORT).show();
-                                finish(); // Close this activity and return to FeedActivity
-
-
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Firestore update failed", e);
-                            });
-
                 } catch (Exception e) {
-                    Log.e(TAG, "Error in processing Gemini result", e);
+                    Log.e(TAG, "Error parsing background JSON", e);
                 }
             }
 
             @Override
             public void onError(Throwable error) {
-                Log.e(TAG, "onError: ", error);
+                Log.e(TAG, "Gemini background error: ", error);
             }
-
-
         });
     }
-
 
 
     private String getPrompt(String title, String description, ArrayList<String> groceries){

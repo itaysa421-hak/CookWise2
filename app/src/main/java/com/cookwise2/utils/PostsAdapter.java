@@ -58,10 +58,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.ownerTextView.setText(post.getOwnerNickname());
         holder.createdAtTextView.setText(timestampToString(post.getCreatedAt()));
 
-        if(post.getPostId() == null)
+        if(post.getImageUrl() == null)
         {
             Log.d(TAG, "onBindViewHolder: post id is null");
-            String postPicturePath = "images/profile-pics/" + post.getOwnerUid() + ".jpg";
+            String postPicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
             String potPictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(postPicturePath);
 
             Glide.with(holder.itemView)
@@ -71,12 +71,17 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                     .into(holder.iv_post_image);
         }
         else {
-            String postPicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
-            String potPictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(postPicturePath);
 
-            Glide.with(holder.itemView)
+
+            // שליפת ה-URL ישירות מהאובייקט (שמגיע מה-Firestore)
+            String potPictureUrl = post.getImageUrl();
+
+            Log.d("GlideDebug", "Loading URL: " + potPictureUrl);
+
+            Glide.with(holder.itemView.getContext()) // עדיף להשתמש ב-Context של ה-View
                     .load(potPictureUrl)
                     .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.stat_notify_error) // חשוב כדי לראות אם יש שגיאה
                     .centerCrop()
                     .into(holder.iv_post_image);
         }
