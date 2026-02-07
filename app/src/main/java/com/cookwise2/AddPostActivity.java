@@ -37,11 +37,16 @@ import com.google.firebase.auth.FirebaseAuth;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.cookwise2.utils.RecipePost;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.json.JSONObject;
 
 public class AddPostActivity extends AppCompatActivity {
 
@@ -112,15 +117,20 @@ public class AddPostActivity extends AppCompatActivity {
         db.collection("posts")
                 .add(post)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
-                    Toast.makeText(AddPostActivity.this, "Log saved successfully!", Toast.LENGTH_SHORT).show();
-                    finish(); // Close this activity and return to FeedActivity
+                    String newPostId = documentReference.getId(); // לוקחים את ה-ID האמיתי ש-Firestore יצר
+                    Log.d(TAG, "DocumentSnapshot written with ID: " + newPostId);
+                    Toast.makeText(AddPostActivity.this, "Post published successfully!", Toast.LENGTH_SHORT).show();
+                    this.postId = newPostId;
+
+                    geminiTagging(newPostId);
+
                 })
                 .addOnFailureListener(e -> {
                     Log.w(TAG, "Error adding document", e);
                     Toast.makeText(AddPostActivity.this, "Error saving log: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
         Log.d(TAG, "sendPost: done");
+
 
 
     }
@@ -132,7 +142,7 @@ public class AddPostActivity extends AppCompatActivity {
         ArrayList<String> groceries = collectIngredients();
 
         Random rnd = new Random();
-        postId = ownerId + "-" + String.valueOf(rnd.nextInt(1000000000));
+        this.postId = ownerId + "-" + String.valueOf(rnd.nextInt(1000000000));
 
 
         SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
@@ -209,6 +219,23 @@ public class AddPostActivity extends AppCompatActivity {
             }
         });
     }
+    private Map<String, Object> parseJsonToMap(String jsonString) {
+        Map<String, Object> map = new HashMap<>();
+        try {
+            // ניקוי תגיות Markdown אם Gemini הוסיף אותן (לפעמים הוא מוסיף ```json )
+            String cleanedJson = jsonString.replaceAll("```json|```", "").trim();
+            JSONObject jsonObject = new JSONObject(cleanedJson);
+            Iterator<String> keys = jsonObject.keys();
+
+            while (keys.hasNext()) {
+                String key = keys.next();
+                map.put(key, jsonObject.get(key));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
     private String groceriesToString(ArrayList<String> groceries)
     {
         String str = "";
@@ -221,6 +248,67 @@ public class AddPostActivity extends AppCompatActivity {
         }
         return str;
     }
+
+    private void geminiTagging(String documentId) {
+        // בניית הפרומפט בעזרת הפונקציות שבנינו
+        String recipeTitle = title.getText().toString();
+        String recipeInstructions = content.getText().toString();
+        ArrayList<String> ingredientsStr = collectIngredients();
+
+        String prompt = getPrompt(recipeTitle, recipeInstructions, ingredientsStr);
+
+        GeminiManager gemini = GeminiManager.getInstance();
+
+        // מומלץ להציג ProgressBar כאן אם יש לך
+
+        gemini.sendText(prompt, this, new GeminiManager.GeminiCallback() {
+            @Override
+            public void onSuccess(String result) {
+                // 1. ניקוי התוצאה (מסיר תגיות Markdown של JSON אם קיימות)
+                String cleanedJson = result.replace("```json", "").replace("```", "").trim();
+
+                Log.d(TAG, "Cleaned JSON: " + cleanedJson);
+
+                try {
+                    // 2. המרה למפה (כאן יכולה להיות שגיאת Parsing אם ה-JSON לא תקין)
+                    Map<String, Object> newMap = parseJsonToMap(cleanedJson);
+
+                    if (newMap == null || newMap.isEmpty()) {
+                        Log.e(TAG, "Parsing failed: Map is empty");
+                        return;
+                    }
+
+                    // 3. עדכון Firestore
+                    FirebaseFirestore db = FirebaseFirestore.getInstance();
+                    db.collection("posts").document(documentId)
+                            .update("classification", newMap)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "Classification updated successfully for post: " + postId);
+                                // כאן אפשר להסתיר את ה-ProgressBar או לעדכן את ה-UI
+
+                                Toast.makeText(AddPostActivity.this, "Classification updated successfully!", Toast.LENGTH_SHORT).show();
+                                finish(); // Close this activity and return to FeedActivity
+
+
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Firestore update failed", e);
+                            });
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in processing Gemini result", e);
+                }
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                Log.e(TAG, "onError: ", error);
+            }
+
+
+        });
+    }
+
 
 
     private String getPrompt(String title, String description, ArrayList<String> groceries){
@@ -256,4 +344,5 @@ public class AddPostActivity extends AppCompatActivity {
         return prompt;
 
     }
+
 }
