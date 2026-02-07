@@ -132,12 +132,8 @@ public class AddPostActivity extends AppCompatActivity {
         String nickname = sharedPreferences.getString("nickname", "N/A");
 
         Timestamp createdAt = new Timestamp(new Date());
-//        uploadProfilePictureToSupabase();
-        return new RecipePost(postId,titleStr, description, groceries , ownerId, nickname, createdAt);
 
-
-
-
+        return new RecipePost(this.postId,titleStr, description, groceries , ownerId, nickname, createdAt);
     }
     private void addNewRow() {
         // 1. ניפוח (Inflate) של קובץ השורה הבודדת
@@ -213,16 +209,16 @@ public class AddPostActivity extends AppCompatActivity {
         db.collection("posts")
                 .add(post)
                 .addOnSuccessListener(documentReference -> {
-                    String newPostId = documentReference.getId();
+//                    String newPostId = documentReference.getId();
 
                     Map<String, Object> updates = new HashMap<>();
-                    updates.put("postId", newPostId);
+                    updates.put("postId", this.postId);
                     if (imageUrl != null) {
                         updates.put("imageUrl", imageUrl); // חשוב: שם השדה שבו ה-Adapter מחפש
                     }
 
                     documentReference.update(updates);
-                    geminiTaggingInBackground(newPostId, post);
+                    geminiTaggingInBackground(this.postId, post);
 
                     Toast.makeText(AddPostActivity.this, "המתכון עלה בהצלחה!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(AddPostActivity.this, FeedActivity.class);

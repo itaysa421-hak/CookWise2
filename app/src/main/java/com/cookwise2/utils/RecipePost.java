@@ -49,4 +49,5 @@ public class RecipePost implements java.io.Serializable {
     public String getPostId(){return postId;}
     public void setImageUrl(String imageUrl){this.imageUrl = imageUrl;}
     public String getImageUrl(){return imageUrl;}
+    public void setPostId(String postId){this.postId = postId;}
 }
