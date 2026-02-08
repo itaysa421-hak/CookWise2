@@ -53,13 +53,25 @@ public class RecipeDetailsActivity extends AppCompatActivity {
 //        String profilePicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
 //        String imageUrl = SupabaseStorageHelper.getFileSupabaseUrl(profilePicturePath);
         String imageUrl = post.getImageUrl();
+        if(imageUrl == null){
+            Glide.with(this)
+                    .load(R.drawable.generic_recipe_image_background).
+                    placeholder(android.R.drawable.ic_menu_gallery)
+                    .centerCrop()
+                    .into(ivDetailImage);
 
 
-        Glide.with(this)
-                .load(imageUrl)
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .centerCrop()
-                .into(ivDetailImage);
+        }
+        else{
+            Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .centerCrop()
+                    .into(ivDetailImage);
+        }
+
+
+
     }
 
     /**
