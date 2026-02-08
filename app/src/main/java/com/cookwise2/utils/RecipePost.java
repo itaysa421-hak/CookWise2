@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class RecipePost implements java.io.Serializable {
     private static final long serialVersionUID = 1L;

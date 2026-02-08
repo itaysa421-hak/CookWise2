@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -39,9 +40,13 @@ public class FeedActivity extends AppCompatActivity {
     private static final String TAG = "FeedActivity";
 
     String nickname;
-    List<RecipePost> posts;
+
     private RecyclerView recyclerView;
     private PostsAdapter postsAdapter;
+    private List<RecipePost> posts;
+    private List<RecipePost> allPosts; // הרשימה המקורית המלאה
+    private String currentSearchQuery = "";
+    private String currentFilterCategory = "All";
 
 
     @Override
@@ -61,6 +66,27 @@ public class FeedActivity extends AppCompatActivity {
         posts = new ArrayList<>();
 
         initRecyclerView();
+        EditText etSearch = findViewById(R.id.etSearch);
+        etSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                currentSearchQuery = s.toString();
+                applyFilters();
+            }
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        com.google.android.material.chip.ChipGroup chipGroup = findViewById(R.id.chipGroupFilters);
+        chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            com.google.android.material.chip.Chip chip = findViewById(checkedId);
+            if (chip != null) {
+                currentFilterCategory = chip.getText().toString();
+                applyFilters();
+            }
+        });
         registerToNewPosts();
 
         Button buttonLogout = findViewById(R.id.buttonLogout);
@@ -111,39 +137,71 @@ public class FeedActivity extends AppCompatActivity {
         recyclerView.setAdapter(postsAdapter);
     }
 
+    private void applyFilters() {
+        List<RecipePost> filteredList = new ArrayList<>();
+
+        for (RecipePost post : allPosts) {
+            // 1. בדיקת חיפוש טקסט (על הכותרת)
+            boolean matchesSearch = post.getTitle().toLowerCase().contains(currentSearchQuery.toLowerCase());
+
+            // 2. בדיקת קטגוריה (AI Classification)
+            boolean matchesCategory = false;
+            if (currentFilterCategory.equals("All")) {
+                matchesCategory = true;
+            } else {
+                java.util.Map<String, Object> tags = post.getClassification();
+                if (tags != null) {
+                    // בדיקת התאמה לפי הקטגוריות שהגדרנו ב-Chips
+                    String dietary = String.valueOf(tags.get("dietary_info"));
+                    String difficulty = String.valueOf(tags.get("difficulty"));
+                    String mealType = String.valueOf(tags.get("meal_type"));
+
+                    matchesCategory = currentFilterCategory.equals(dietary) ||
+                            currentFilterCategory.equals(difficulty) ||
+                            currentFilterCategory.equals(mealType);
+                }
+            }
+
+            if (matchesSearch && matchesCategory) {
+                filteredList.add(post);
+            }
+        }
+
+        // עדכון האדפטור עם הרשימה החדשה
+        posts.clear();
+        posts.addAll(filteredList);
+        postsAdapter.notifyDataSetChanged();
+    }
 
     private void registerToNewPosts() {
-        Log.d(TAG, "registerToNewPosts: start");
-
+        allPosts = new ArrayList<>(); // אתחול הרשימה המקורית
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("posts")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
-                .addSnapshotListener(new EventListener<QuerySnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable QuerySnapshot snapshots,
-                                        @Nullable FirebaseFirestoreException e) {
-                        if (e != null) {
-                            Log.w(TAG, "listen:error", e);
-                            return;
-                        }
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) return;
 
-                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                            switch (dc.getType()) {
-                                case ADDED:
-                                    Log.d(TAG, "New post: " + dc.getDocument().getData());
-                                    RecipePost post = dc.getDocument().toObject(RecipePost.class);
-                                    posts.addFirst(post);
-                                    break;
-                                case MODIFIED:
-                                    Log.d(TAG, "Modified post: " + dc.getDocument().getData());
-                                    break;
-                                case REMOVED:
-                                    Log.d(TAG, "Removed post: " + dc.getDocument().getData());
-                                    break;
-                            }
+                    for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                        RecipePost post = dc.getDocument().toObject(RecipePost.class);
+                        switch (dc.getType()) {
+                            case ADDED:
+                                allPosts.add(0, post); // הוספה להתחלה
+                                break;
+                            case MODIFIED:
+                                // עדכון פוסט קיים ברשימה המקורית
+                                for (int i = 0; i < allPosts.size(); i++) {
+                                    if (allPosts.get(i).getPostId().equals(post.getPostId())) {
+                                        allPosts.set(i, post);
+                                        break;
+                                    }
+                                }
+                                break;
+                            case REMOVED:
+                                allPosts.removeIf(p -> p.getPostId().equals(post.getPostId()));
+                                break;
                         }
-                        postsAdapter.notifyDataSetChanged();
                     }
+                    applyFilters(); // בכל שינוי ב-DB, נפעיל מחדש את הסינון הנוכחי
                 });
     }
 
