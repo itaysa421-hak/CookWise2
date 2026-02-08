@@ -58,7 +58,7 @@ public class AddPostActivity extends AppCompatActivity {
 
     private LinearLayout ingredientsContainer;
     private Button btnAddIngredient;
-    private String postId;
+    private LinearLayout imagePlaceholderContainer;
 
 
     @Override
@@ -73,7 +73,7 @@ public class AddPostActivity extends AppCompatActivity {
         });
 
         title = findViewById(R.id.etPostTitle);
-
+        imagePlaceholderContainer = findViewById(R.id.imagePlaceholderContainer);
         content = findViewById(R.id.etPostContent);
         ingredientsContainer = findViewById(R.id.ingredientsContainer);
         btnAddIngredient = findViewById(R.id.btnAddIngredient);
@@ -87,6 +87,11 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 userImageSelector.showImageSourceDialog();
+//                v.postDelayed(() -> {
+//                    if (userImageSelector.createImageFile() != null) {
+//                        imagePlaceholderContainer.setVisibility(View.GONE);
+//                    }
+//                }, 5000);
             }
         });
 
@@ -111,11 +116,12 @@ public class AddPostActivity extends AppCompatActivity {
         Log.d(TAG, "sendPost: start");
 
         // יצירת ID מראש כדי שישמש את כל השלבים
-        Random rnd = new Random();
-        this.postId = FirebaseAuth.getInstance().getCurrentUser().getUid() + "-" + rnd.nextInt(1000000000);
+
 
         // התחלת השרשרת: קודם תמונה, אחר כך השאר
-        uploadImageAndThenPublish();
+
+        finishPublishing();
+//        uploadImageAndThenPublish();
     }
 
     public RecipePost createRecipePost(){
@@ -133,7 +139,7 @@ public class AddPostActivity extends AppCompatActivity {
 
         Timestamp createdAt = new Timestamp(new Date());
 
-        return new RecipePost(this.postId,titleStr, description, groceries , ownerId, nickname, createdAt);
+        return new RecipePost(titleStr, description, groceries , ownerId, nickname, createdAt);
     }
     private void addNewRow() {
         // 1. ניפוח (Inflate) של קובץ השורה הבודדת
@@ -174,16 +180,15 @@ public class AddPostActivity extends AppCompatActivity {
         // עכשיו יש לך רשימה מוכנה! אפשר לשלוח אותה ל-Firebase או להציג אותה
         // Log.d("RecipeApp", "Ingredients: " + ingredientsList.toString());
     }
-    private void uploadImageAndThenPublish() {
+    private void uploadImageAndThenPublish(String newPostId) {
         File imageFile = userImageSelector.createImageFile();
 
         // אם המשתמש לא בחר תמונה, עוברים ישר לפרסום הפוסט
         if (imageFile == null) {
-            finishPublishing(null); // null אומר שאין URL לתמונה
             return;
         }
 
-        String filename = "images/post-pic/" + postId + ".jpg";
+        String filename = "images/post-pic/" + newPostId + ".jpg";
         Log.i(TAG, "Uploading file to Supabase: " + filename);
 
         SupabaseStorageHelper.uploadPicture(imageFile, filename, new SupabaseStorageHelper.OnResultCallback() {
@@ -191,34 +196,32 @@ public class AddPostActivity extends AppCompatActivity {
             public void onResult(boolean success, String url, String error) {
                 if (success) {
                     Log.i(TAG, "Image uploaded successfully: " + url);
-                    finishPublishing(url); // ממשיכים עם ה-URL שקיבלנו
+                    Map<String, Object> update = new HashMap<>();
+                    update.put("imageUrl", url);
+                    FirebaseFirestore.getInstance()
+                            .collection("posts")
+                            .document(newPostId).update(update);
+
                 } else {
                     Log.e(TAG, "Supabase upload failed: " + error);
                     // גם אם התמונה נכשלה, כנראה תרצה שהפוסט יעלה בכל זאת
-                    finishPublishing(null);
                 }
             }
         });
     }
-    private void finishPublishing(String imageUrl) {
+    private void finishPublishing() {
         RecipePost post = createRecipePost();
         // כאן תוכל להוסיף את ה-imageUrl לאובייקט הפוסט אם הוספת שדה כזה במחלקה
-        post.setImageUrl(imageUrl);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection("posts")
                 .add(post)
                 .addOnSuccessListener(documentReference -> {
-//                    String newPostId = documentReference.getId();
+                    String newPostId = documentReference.getId();
 
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("postId", this.postId);
-                    if (imageUrl != null) {
-                        updates.put("imageUrl", imageUrl); // חשוב: שם השדה שבו ה-Adapter מחפש
-                    }
+                    uploadImageAndThenPublish(newPostId);
+                    geminiTaggingInBackground(newPostId, post);
 
-                    documentReference.update(updates);
-                    geminiTaggingInBackground(this.postId, post);
 
                     Toast.makeText(AddPostActivity.this, "המתכון עלה בהצלחה!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(AddPostActivity.this, FeedActivity.class);

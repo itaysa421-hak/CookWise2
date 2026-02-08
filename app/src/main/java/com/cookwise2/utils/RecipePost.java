@@ -1,6 +1,7 @@
 package com.cookwise2.utils;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.Exclude;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,22 +15,24 @@ public class RecipePost implements java.io.Serializable {
     private String ownerUid;
     private String ownerNickname;
     private long createdAtMillis;
-    private String postId;
     private java.util.Map<String, Object> classification;
     private String imageUrl;
+
+    @Exclude
+    private String id;
 
 
     public RecipePost() {}
 
-    public RecipePost(String postId,String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
+    public RecipePost(String title,String description,  ArrayList<String> groceries, String ownerUid, String ownerNickname,Timestamp createdAt) {
         this.title = title;
         this.groceries = groceries;
         this.description = description;
         this.ownerUid = ownerUid;
         this.ownerNickname = ownerNickname;
         this.createdAtMillis = createdAt.toDate().getTime();
-        this.postId = postId;
         this.imageUrl = null;
+        this.classification = null;
     }
 
     public java.util.Map<String, Object> getClassification() { return classification; }
@@ -47,8 +50,11 @@ public class RecipePost implements java.io.Serializable {
     public String getOwnerNickname() { return ownerNickname; }
     public void setOwnerNickname(String ownerNickname) { this.ownerNickname = ownerNickname; }
     public ArrayList<String> getGroceries(){return groceries;}
-    public String getPostId(){return postId;}
     public void setImageUrl(String imageUrl){this.imageUrl = imageUrl;}
     public String getImageUrl(){return imageUrl;}
-    public void setPostId(String postId){this.postId = postId;}
+
+    @Exclude
+    public void  setId(String id){this.id = id;}
+    @Exclude
+    public String getId(){return this.id;}
 }

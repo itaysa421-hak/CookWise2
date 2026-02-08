@@ -60,15 +60,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
         if(post.getImageUrl() == null)
         {
-            Log.d(TAG, "onBindViewHolder: post id is null");
-            String postPicturePath = "images/post-pic/" + post.getPostId() + ".jpg";
-            String potPictureUrl = SupabaseStorageHelper.getFileSupabaseUrl(postPicturePath);
 
-            Glide.with(holder.itemView)
-                    .load(potPictureUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .centerCrop()
-                    .into(holder.iv_post_image);
+
+            //לעשות אחרי זה
+
         }
         else {
 

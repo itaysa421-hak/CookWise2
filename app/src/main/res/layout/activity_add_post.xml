@@ -50,29 +50,33 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/bg_ingredients_section" /> <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:alpha="0.5"
-                        android:src="@android:drawable/ic_menu_camera"
-                        app:tint="@color/black" />
-
-                    <TextView
+                        android:src="@drawable/bg_ingredients_section" />
+                    <LinearLayout
+                        android:id="@+id/imagePlaceholderContainer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:alpha="0.5"
-                        android:text="Tap to add a photo"
-                        android:textColor="@color/black"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:id="@+id/ivPostImageCameraIcon"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:alpha="0.5"
+                            android:src="@android:drawable/ic_menu_camera"
+                            app:tint="@color/black" />
+
+                        <TextView
+                            android:id="@+id/tvPostImagePlaceholder"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:alpha="0.5"
+                            android:text="Tap to add a photo"
+                            android:textColor="@color/black"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </FrameLayout>
             </com.google.android.material.card.MaterialCardView>
 

@@ -183,6 +183,8 @@ public class FeedActivity extends AppCompatActivity {
 
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         RecipePost post = dc.getDocument().toObject(RecipePost.class);
+                        post.setId(dc.getDocument().getId());
+
                         switch (dc.getType()) {
                             case ADDED:
                                 allPosts.add(0, post); // הוספה להתחלה
@@ -190,14 +192,14 @@ public class FeedActivity extends AppCompatActivity {
                             case MODIFIED:
                                 // עדכון פוסט קיים ברשימה המקורית
                                 for (int i = 0; i < allPosts.size(); i++) {
-                                    if (allPosts.get(i).getPostId().equals(post.getPostId())) {
+                                    if (allPosts.get(i).getId().equals(post.getId())) {
                                         allPosts.set(i, post);
                                         break;
                                     }
                                 }
                                 break;
                             case REMOVED:
-                                allPosts.removeIf(p -> p.getPostId().equals(post.getPostId()));
+                                allPosts.removeIf(p -> p.getId().equals(post.getId()));
                                 break;
                         }
                     }
