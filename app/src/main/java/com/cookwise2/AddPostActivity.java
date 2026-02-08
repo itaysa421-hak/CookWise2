@@ -4,7 +4,6 @@ import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,15 +17,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
 import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.SupabaseStorageHelper;
 import com.cookwise2.utils.UserImageSelector;
@@ -39,9 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import com.cookwise2.utils.RecipePost;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -115,13 +108,9 @@ public class AddPostActivity extends AppCompatActivity {
     public void sendPost() {
         Log.d(TAG, "sendPost: start");
 
-        // יצירת ID מראש כדי שישמש את כל השלבים
 
 
-        // התחלת השרשרת: קודם תמונה, אחר כך השאר
-
-        finishPublishing();
-//        uploadImageAndThenPublish();
+        createPostAndThenUploadImage();
     }
 
     public RecipePost createRecipePost(){
@@ -209,7 +198,7 @@ public class AddPostActivity extends AppCompatActivity {
             }
         });
     }
-    private void finishPublishing() {
+    private void createPostAndThenUploadImage() {
         RecipePost post = createRecipePost();
         // כאן תוכל להוסיף את ה-imageUrl לאובייקט הפוסט אם הוספת שדה כזה במחלקה
 
