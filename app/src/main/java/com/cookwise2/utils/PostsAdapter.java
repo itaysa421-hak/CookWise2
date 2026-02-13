@@ -60,7 +60,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
         if(post.getImageUrl() == null)
         {
-          Glide.with(holder.itemView.getContext()).load(R.drawable.generic_recipe_image_background).into(holder.iv_post_image);
+            Glide.with(holder.itemView.getContext()).load(R.drawable.generic_recipe_image_background).into(holder.iv_post_image);
 
 
         }
