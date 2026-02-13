@@ -35,6 +35,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FeedActivity extends AppCompatActivity {
     private static final String TAG = "FeedActivity";
@@ -138,27 +139,32 @@ public class FeedActivity extends AppCompatActivity {
     }
 
     private void applyFilters() {
+        if (allPosts == null) return;
+
         List<RecipePost> filteredList = new ArrayList<>();
 
         for (RecipePost post : allPosts) {
-            // 1. בדיקת חיפוש טקסט (על הכותרת)
+            // 1. בדיקת חיפוש טקסט חופשי (כותרת)
             boolean matchesSearch = post.getTitle().toLowerCase().contains(currentSearchQuery.toLowerCase());
 
-            // 2. בדיקת קטגוריה (AI Classification)
+            // 2. בדיקת קטגוריה גנרית
             boolean matchesCategory = false;
+
             if (currentFilterCategory.equals("All")) {
                 matchesCategory = true;
             } else {
-                java.util.Map<String, Object> tags = post.getClassification();
+                Map<String, Object> tags = post.getClassification();
                 if (tags != null) {
-                    // בדיקת התאמה לפי הקטגוריות שהגדרנו ב-Chips
-                    String dietary = String.valueOf(tags.get("dietary_info"));
-                    String difficulty = String.valueOf(tags.get("difficulty"));
-                    String mealType = String.valueOf(tags.get("meal_type"));
+                    // אנחנו רצים על כל הערכים שג'ימיני נתן (Vegan, Easy, Italian וכו')
+                    for (Object value : tags.values()) {
+                        String tagValue = String.valueOf(value);
 
-                    matchesCategory = currentFilterCategory.equals(dietary) ||
-                            currentFilterCategory.equals(difficulty) ||
-                            currentFilterCategory.equals(mealType);
+                        // השוואה לטקסט של הצ'יפ הנבחר (ללא הבדל ברישיות)
+                        if (tagValue.equalsIgnoreCase(currentFilterCategory)) {
+                            matchesCategory = true;
+                            break; // מצאנו התאמה אחת, מספיק לנו
+                        }
+                    }
                 }
             }
 
@@ -167,7 +173,7 @@ public class FeedActivity extends AppCompatActivity {
             }
         }
 
-        // עדכון האדפטור עם הרשימה החדשה
+        // עדכון ה-RecyclerView דרך האדפטור
         posts.clear();
         posts.addAll(filteredList);
         postsAdapter.notifyDataSetChanged();
