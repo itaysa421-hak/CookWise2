@@ -20,16 +20,39 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvHeader"
-                android:layout_width="wrap_content"
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="20dp"
-                android:text="Add a new post:"
-                android:textColor="@color/black"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:layout_marginBottom="20dp">
+
+                <TextView
+                    android:id="@+id/tvHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:text="Add a new post:"
+                    android:textColor="@color/black"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAiAssistant"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="Magic AI ✨"
+                    android:textColor="@color/CornflowerBlue"
+                    android:textStyle="bold"
+                    android:letterSpacing="0"
+                    app:icon="@android:drawable/ic_menu_view"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/CornflowerBlue" />
+            </RelativeLayout>
+
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardRecipeImage"

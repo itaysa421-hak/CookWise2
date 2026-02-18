@@ -17,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -25,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.SupabaseStorageHelper;
 import com.cookwise2.utils.UserImageSelector;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -53,6 +56,36 @@ public class AddPostActivity extends AppCompatActivity {
     private Button btnAddIngredient;
     private LinearLayout imagePlaceholderContainer;
 
+    private final ActivityResultLauncher<Intent> aiLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+
+                    // 1. מילוי כותרת
+                    String aiTitle = data.getStringExtra("ai_title");
+                    if (aiTitle != null) {
+                        ((EditText)findViewById(R.id.etPostTitle)).setText(aiTitle);
+                    }
+
+                    // 2. מילוי הוראות הכנה
+                    String aiInstructions = data.getStringExtra("ai_instructions");
+                    if (aiInstructions != null) {
+                        ((EditText)findViewById(R.id.etPostContent)).setText(aiInstructions);
+                    }
+
+                    // 3. מילוי מצרכים (דורש לולאה כי זו רשימה)
+                    ArrayList<String> aiIngredients = data.getStringArrayListExtra("ai_ingredients");
+                    if (aiIngredients != null) {
+                        LinearLayout container = findViewById(R.id.ingredientsContainer);
+                        container.removeAllViews(); // מנקה את מה שהיה קודם
+                        for (String ingredient : aiIngredients) {
+                            addIngredientRowFromAi(ingredient);
+                        }
+                    }
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +106,11 @@ public class AddPostActivity extends AppCompatActivity {
 
         ivRecipeImage = findViewById(R.id.ivRecipeImage);
 
+        View btnAi = findViewById(R.id.btnAiAssistant);
+        btnAi.setOnClickListener(v -> {
+            Intent intent = new Intent(AddPostActivity.this, AiGeneratorActivity.class);
+            aiLauncher.launch(intent);
+        });
 
         userImageSelector = new UserImageSelector(this, ivRecipeImage);
         cardRecipeImage = findViewById(R.id.cardRecipeImage);
@@ -332,6 +370,23 @@ public class AddPostActivity extends AppCompatActivity {
                 "5. Ensure the output is valid JSON.";
         return prompt;
 
+    }
+    private void addIngredientRowFromAi(String ingredientName) {
+        LinearLayout container = findViewById(R.id.ingredientsContainer);
+
+        // ניצול הלוגיקה הקיימת שלך להוספת שורה (בהנחה שיש לך Layout לשורה)
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View rowView = inflater.inflate(R.layout.row_ingredient, null); // וודא שזה השם של ה-XML של השורה
+
+        EditText etName = rowView.findViewById(R.id.etIngredientName);
+        etName.setText(ingredientName);
+
+        // חיבור כפתור המחיקה לשורה החדשה
+        rowView.findViewById(R.id.btnRemoveIngredient).setOnClickListener(v ->
+                container.removeView(rowView)
+        );
+
+        container.addView(rowView);
     }
 
 }
