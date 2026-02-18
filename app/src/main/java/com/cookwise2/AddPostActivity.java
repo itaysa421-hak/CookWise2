@@ -2,8 +2,13 @@ package com.cookwise2;
 
 import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
 
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -105,8 +110,31 @@ public class AddPostActivity extends AppCompatActivity {
         btnAddIngredient = findViewById(R.id.btnAddIngredient);
 
         ivRecipeImage = findViewById(R.id.ivRecipeImage);
-
+        // בתוך ה-onCreate, אחרי שזיהית את הכפתור:
         View btnAi = findViewById(R.id.btnAiAssistant);
+
+        MaterialCardView cardAi = findViewById(R.id.cardAiContainer);
+
+// יצירת אנימטור שמשנה את צבע המסגרת (Stroke) בין כחול לסגול/ורוד
+        ValueAnimator colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(),
+                Color.parseColor("#6495ED"), // CornflowerBlue
+                Color.parseColor("#A855F7"), // Purple AI
+                Color.parseColor("#EC4899"), // Pink AI
+                Color.parseColor("#6495ED")); // חזרה לכחול
+
+        colorAnimation.setDuration(3000); // 3 שניות לסיבוב צבע מלא
+        colorAnimation.setRepeatCount(ValueAnimator.INFINITE);
+
+        colorAnimation.addUpdateListener(animator -> {
+            cardAi.setStrokeColor((int) animator.getAnimatedValue());
+            // הוספת "זהירה" עדינה בעזרת שינוי ה-Elevation
+            float phase = animator.getAnimatedFraction();
+            cardAi.setCardElevation(4f + (float) Math.sin(phase * Math.PI * 2) * 2f);
+
+        });
+
+        colorAnimation.start();
+
         btnAi.setOnClickListener(v -> {
             Intent intent = new Intent(AddPostActivity.this, AiGeneratorActivity.class);
             aiLauncher.launch(intent);

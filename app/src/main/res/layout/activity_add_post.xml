@@ -37,20 +37,34 @@
                     android:textSize="26sp"
                     android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAiAssistant"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAiContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:text="Magic AI ✨"
-                    android:textColor="@color/CornflowerBlue"
-                    android:textStyle="bold"
-                    android:letterSpacing="0"
-                    app:icon="@android:drawable/ic_menu_view"
-                    app:iconPadding="4dp"
-                    app:iconTint="@color/CornflowerBlue" />
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="@color/CornflowerBlue">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAiAssistant"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:text="MAGIC AI ✨"
+                        android:textColor="@color/black"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-black"
+                        android:paddingHorizontal="16dp"
+                        app:icon="@android:drawable/ic_menu_edit"
+                        app:iconSize="18dp"
+                        app:iconTint="@color/CornflowerBlue"
+                        android:backgroundTint="@color/white"
+                        app:rippleColor="#226495ED" />
+
+                </com.google.android.material.card.MaterialCardView>
             </RelativeLayout>
 
 

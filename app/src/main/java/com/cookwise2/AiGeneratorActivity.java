@@ -44,6 +44,7 @@ public class AiGeneratorActivity extends AppCompatActivity {
         initViews();
         setupToggle();
 
+
         // הוספת שורה ראשונה כברירת מחדל
         addIngredientRow();
 

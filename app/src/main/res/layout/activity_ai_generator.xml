@@ -1,136 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="#FFFFFF">
+    android:background="#F8F9FE"
+    android:padding="24dp">
 
-    <TextView
-        android:id="@+id/tvAiTitle"
+    <LinearLayout
+        android:id="@+id/headerContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Recipe Wizard ✨"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <TextView
-        android:id="@+id/tvAiSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="How would you like to create?"
-        android:alpha="0.6"
-        app:layout_constraintTop_toBottomOf="@id/tvAiTitle"
-        app:layout_constraintStart_toStartOf="parent" />
+        <TextView
+            android:id="@+id/tvAiTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:text="Recipe Wizard ✨"
+            android:textColor="#1A1C1E"
+            android:textSize="32sp" />
+
+        <TextView
+            android:id="@+id/tvAiSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:alpha="0.7"
+            android:fontFamily="sans-serif-medium"
+            android:text="Let AI craft your next meal"
+            android:textColor="#454749"
+            android:textSize="16sp" />
+    </LinearLayout>
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggleAiMode"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        app:singleSelection="true"
-        app:selectionRequired="true"
+        android:layout_marginTop="32dp"
         app:checkedButton="@id/btnModeVision"
-        app:layout_constraintTop_toBottomOf="@id/tvAiSubtitle">
+        app:layout_constraintTop_toBottomOf="@id/headerContainer"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
         <Button
             android:id="@+id/btnModeVision"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:text="Idea/Vision" />
+            android:fontFamily="sans-serif-medium"
+            android:text="Idea Vision"
+            android:textAllCaps="false"
+            app:cornerRadius="12dp" />
 
         <Button
             android:id="@+id/btnModePantry"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_weight="1"
-            android:text="What's in my Fridge?" />
+            android:fontFamily="sans-serif-medium"
+            android:text="My Fridge"
+            android:textAllCaps="false"
+            app:cornerRadius="12dp" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nsvIngredients"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:visibility="gone"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="4dp"
         app:layout_constraintBottom_toTopOf="@id/btnGenerate"
-        app:layout_constraintTop_toBottomOf="@id/toggleAiMode">
+        app:layout_constraintTop_toBottomOf="@id/toggleAiMode"
+        app:strokeColor="#E0E7FF"
+        app:strokeWidth="1dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_ingredients_section"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ingredients I have:"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
-
-            <LinearLayout
-                android:id="@+id/aiIngredientsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical" />
-
-            <Button
-                android:id="@+id/btnAddIngredientRow"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="+ Add ingredient"
-                android:textColor="@color/CornflowerBlue" />
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilAiVision"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toTopOf="@id/btnGenerate"
-        app:layout_constraintTop_toBottomOf="@id/toggleAiMode">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etAiVision"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="top"
-            android:hint="Describe your dream dish..."
-            android:inputType="textMultiLine" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:padding="16dp">
 
-    <ProgressBar
-        android:id="@+id/pbLoading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btnGenerate"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tilAiVision" />
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/nsvIngredients"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="What's available?"
+                        android:textColor="#6366F1"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:id="@+id/aiIngredientsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <Button
+                        android:id="@+id/btnAddIngredientRow"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="12dp"
+                        android:text="+ Add another item"
+                        android:textColor="@color/CornflowerBlue"
+                        app:icon="@android:drawable/ic_input_add" />
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilAiVision"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeColor="@color/CornflowerBlue"
+                app:hintEnabled="false">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etAiVision"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@android:color/transparent"
+                    android:gravity="top"
+                    android:hint="Explain what you're craving...\n(e.g., 'A spicy Italian pasta with a twist')"
+                    android:inputType="textMultiLine"
+                    android:lineSpacingExtra="4sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <ProgressBar
+                android:id="@+id/pbLoading"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/CornflowerBlue"
+                android:visibility="gone" />
+
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnGenerate"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="Cast Magic 🪄"
-        android:textSize="18sp"
-        app:cornerRadius="16dp"
+        android:layout_height="64dp"
         android:backgroundTint="@color/CornflowerBlue"
+        android:fontFamily="sans-serif-black"
+        android:text="Cast Magic 🪄"
+        android:textAllCaps="false"
+        android:textSize="18sp"
+        app:cornerRadius="20dp"
+        app:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
