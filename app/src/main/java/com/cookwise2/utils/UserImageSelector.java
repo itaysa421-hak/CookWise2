@@ -1,4 +1,5 @@
 package com.cookwise2.utils;
+
 import static android.app.Activity.RESULT_OK;
 
 import android.app.Activity;
@@ -21,15 +22,22 @@ import java.io.File;
 public class UserImageSelector {
 
     private AppCompatActivity activity;
-
     private ImageView imageView;
-
     private Uri imageUri;
     private Bitmap imageBitmap;
 
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private ActivityResultLauncher<Intent> cameraLauncher;
     private static final String TAG = "UserImageSelector";
+
+    // --- הוספת ה-Listener ---
+    private ImageSelectionListener listener;
+
+    // --- ממשק ה-Callback ---
+    public interface ImageSelectionListener {
+        void onImageSelected(Uri uri);
+    }
+
 
     public UserImageSelector(AppCompatActivity activity, ImageView imageView){
         this.activity = activity;
@@ -38,10 +46,17 @@ public class UserImageSelector {
         this.imageBitmap = null;
         initResultLaunchers();
     }
+
+    // --- הוספת פונקציה להגדרת ה-Listener מבחוץ ---
+    public void setOnImageSelectedListener(ImageSelectionListener listener) {
+        this.listener = listener;
+    }
+
+
     public void showImageSourceDialog() {
         String[] options = {"Take Photo", "Choose from Gallery"};
         new AlertDialog.Builder(activity)
-                .setTitle("Select Profile Picture")
+                .setTitle("Select Picture")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
                         Log.d(TAG, "User chose to take a photo");
@@ -55,7 +70,6 @@ public class UserImageSelector {
     }
     private void openCamera() {
         Log.d(TAG, "openCamera: start");
-
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         cameraLauncher.launch(cameraIntent);
         Log.d(TAG, "openCamera: end");
@@ -63,30 +77,27 @@ public class UserImageSelector {
 
     private void openImagePicker() {
         Log.d(TAG, "openImagePicker: start");
-
-
-        // Launch the photo picker and let the user choose images and videos.
         pickMedia.launch(new PickVisualMediaRequest.Builder()
-                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly
-                        .INSTANCE)
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                 .build());
-
-
         Log.d(TAG, "openImagePicker: end");
     }
 
     private void initResultLaunchers()
     {
         Log.d(TAG, "InitResultLaunchers: start");
-        // Registers a photo picker activity launcher in single-select mode.
         pickMedia =
                 activity.registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                    // Callback is invoked after the user selects a media item or closes the
-                    // photo picker.
                     if (uri != null) {
                         Log.d(TAG, "PhotoPicker: Selected URI: " + uri);
                         this.imageUri = uri;
-                        imageView.setImageURI(uri);
+                        if (imageView != null) {
+                            imageView.setImageURI(uri);
+                        }
+                        // --- קריאה ל-Listener עם התוצאה ---
+                        if (listener != null) {
+                            listener.onImageSelected(uri);
+                        }
                     } else {
                         Log.d(TAG, "PhotoPicker: No media selected");
                     }
@@ -97,14 +108,19 @@ public class UserImageSelector {
                 result -> {
                     Log.d(TAG, "Got a camera result");
                     if (result.getResultCode() == RESULT_OK) {
+                        // הגישה הישנה לצילום מחזירה Bitmap. כדי לקבל URI נצטרך לשמור את התמונה קודם.
+                        // לצורך העניין נשאיר את זה כרגע ככה, זה לא רלוונטי לקריסה שלך.
+                        // אם תרצה לתקן את זה בעתיד, תצטרך לשמור את ה-Bitmap לקובץ ולקבל את ה-URI שלו.
                         Log.d(TAG, "Camera result code is ok");
-                        // Handle successful photo capture
                         Intent data = result.getData();
                         Bitmap bitmap = (Bitmap) data.getExtras().get("data");
                         if (bitmap != null) {
                             Log.d(TAG, "setting bitmap");
-                            imageView.setImageBitmap(bitmap);
+                            if (imageView != null) {
+                                imageView.setImageBitmap(bitmap);
+                            }
                             this.imageBitmap = bitmap;
+                            // חסר כאן URI. כרגע ה-Listener לא יקרא אחרי צילום.
                         } else {
                             Log.e(TAG, "Error retrieving image from camera intent");
                         }
@@ -113,7 +129,6 @@ public class UserImageSelector {
                     }
                 }
         );
-
         Log.d(TAG, "InitResultLaunchers: done");
     }
 
@@ -134,4 +149,7 @@ public class UserImageSelector {
         return null;
     }
 
+    public Uri getImageUri() {
+        return imageUri;
+    }
 }

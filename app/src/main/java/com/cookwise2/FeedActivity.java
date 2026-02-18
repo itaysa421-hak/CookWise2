@@ -4,16 +4,23 @@ import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 import static com.google.firebase.firestore.DocumentChange.Type.REMOVED;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -22,8 +29,11 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.PostsAdapter;
 import com.cookwise2.utils.RecipePost;
+import com.cookwise2.utils.UserImageSelector;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.EventListener;
@@ -33,6 +43,10 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +62,8 @@ public class FeedActivity extends AppCompatActivity {
     private List<RecipePost> allPosts; // הרשימה המקורית המלאה
     private String currentSearchQuery = "";
     private String currentFilterCategory = "All";
+    UserImageSelector userImageSelector;
+
 
 
     @Override
@@ -111,7 +127,84 @@ public class FeedActivity extends AppCompatActivity {
         });
 
 
+// 2. חיבור הכפתור ב-onCreate
+        userImageSelector = new UserImageSelector(this, null);
+        userImageSelector.setOnImageSelectedListener(new UserImageSelector.ImageSelectionListener() {
+            @Override
+            public void onImageSelected(Uri uri) {
+                // הקוד הזה ירוץ רק אחרי שהמשתמש בחר תמונה וה-URI זמין
+                Log.d(TAG, "Image selected! URI: " + uri);
+                processImageWithAi(uri);
+            }
+        });
+        FloatingActionButton fabScanner = findViewById(R.id.fabAiScanner);
+        fabScanner.setOnClickListener(v -> {
+            userImageSelector.showImageSourceDialog();
 
+
+        });
+
+
+
+    }
+
+    private void processImageWithAi(Uri imageUri) {
+        // הצגת דיאלוג טעינה
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("AI is analyzing the dish... 🥗");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        try {
+            // הפיכת ה-Uri ל-Bitmap
+            InputStream imageStream = getContentResolver().openInputStream(imageUri);
+            Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
+
+            String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. " +
+                    "Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
+
+            GeminiManager.getInstance().sendImageAndText(bitmap, prompt, this, new GeminiManager.GeminiCallback() {
+                @Override
+                public void onSuccess(String result) {
+                    progressDialog.dismiss();
+                    handleAiResult(result, imageUri); // פונקציה שמעבירה ל-AddPost
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    progressDialog.dismiss();
+                    Toast.makeText(FeedActivity.this, "Failed to analyze image", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+        } catch (Exception e) {
+            progressDialog.dismiss();
+            e.printStackTrace();
+        }
+    }
+    private void handleAiResult(String rawJson, Uri imageUri) {
+        try {
+            // ניקוי התוצאה (במידה וג'ימיני מוסיף תגיות Markdown)
+            String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();
+            JSONObject json = new JSONObject(cleanJson);
+
+            Intent intent = new Intent(this, AddPostActivity.class);
+            intent.putExtra("ai_title", json.getString("title"));
+            intent.putExtra("ai_instructions", json.getString("instructions"));
+            intent.putExtra("uri_image", imageUri);
+
+            JSONArray ingArray = json.getJSONArray("ingredients");
+            ArrayList<String> ingList = new ArrayList<>();
+            for (int i = 0; i < ingArray.length(); i++) {
+                ingList.add(ingArray.getString(i));
+            }
+            intent.putStringArrayListExtra("ai_ingredients", ingList);
+
+            startActivity(intent);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "AI response was not clear enough, try another photo", Toast.LENGTH_SHORT).show();
+        }
     }
     private void readUserData(){
         Log.d(TAG, "readUserData: start");

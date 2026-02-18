@@ -132,8 +132,20 @@ public class AddPostActivity extends AppCompatActivity {
             cardAi.setCardElevation(4f + (float) Math.sin(phase * Math.PI * 2) * 2f);
 
         });
-
         colorAnimation.start();
+
+        if (getIntent().hasExtra("ai_title")) {
+            title.setText(getIntent().getStringExtra("ai_title"));
+            content.setText(getIntent().getStringExtra("ai_instructions"));
+            ivRecipeImage.setImageURI(getIntent().getParcelableExtra("uri_image"));
+
+            ArrayList<String> ingredients = getIntent().getStringArrayListExtra("ai_ingredients");
+            if (ingredients != null) {
+                for (String ing : ingredients) {
+                    addIngredientRowFromAi(ing); // הפונקציה שכבר כתבנו קודם
+                }
+            }
+        }
 
         btnAi.setOnClickListener(v -> {
             Intent intent = new Intent(AddPostActivity.this, AiGeneratorActivity.class);
