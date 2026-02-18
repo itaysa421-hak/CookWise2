@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -57,7 +58,7 @@ public class AiGeneratorActivity extends AppCompatActivity {
         // אתחול רכיבי Pantry
         nsvIngredients = findViewById(R.id.nsvIngredients);
         aiIngredientsContainer = findViewById(R.id.aiIngredientsContainer);
-        MaterialButton btnAddRow = findViewById(R.id.btnAddIngredientRow);
+        Button btnAddRow = findViewById(R.id.btnAddIngredientRow);
         btnAddRow.setOnClickListener(v -> addIngredientRow());
 
         // אתחול כללי
