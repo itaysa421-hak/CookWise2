@@ -51,6 +51,7 @@
                         android:layout_height="match_parent"
                         android:scaleType="centerCrop"
                         android:src="@drawable/bg_ingredients_section" />
+
                     <LinearLayout
                         android:id="@+id/imagePlaceholderContainer"
                         android:layout_width="wrap_content"
