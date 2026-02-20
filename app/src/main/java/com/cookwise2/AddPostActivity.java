@@ -158,11 +158,8 @@ public class AddPostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 userImageSelector.showImageSourceDialog();
-//                v.postDelayed(() -> {
-//                    if (userImageSelector.createImageFile() != null) {
-//                        imagePlaceholderContainer.setVisibility(View.GONE);
-//                    }
-//                }, 5000);
+                imagePlaceholderContainer.setVisibility(View.GONE);
+
             }
         });
 

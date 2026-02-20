@@ -123,6 +123,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="#F8F9FA"
                 android:layout_marginBottom="16dp"
                 android:hint="Recipe name"
                 app:startIconDrawable="@drawable/ic_label">
@@ -177,6 +178,8 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="32dp"
                 android:hint="How do you make it?"
+                android:background="#F8F9FA"
+
                 app:startIconDrawable="@drawable/ic_restaurant_menu">
 
                 <com.google.android.material.textfield.TextInputEditText
