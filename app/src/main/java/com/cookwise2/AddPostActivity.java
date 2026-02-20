@@ -61,36 +61,6 @@ public class AddPostActivity extends AppCompatActivity {
     private Button btnAddIngredient;
     private LinearLayout imagePlaceholderContainer;
 
-    private final ActivityResultLauncher<Intent> aiLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                    Intent data = result.getData();
-
-                    // 1. מילוי כותרת
-                    String aiTitle = data.getStringExtra("ai_title");
-                    if (aiTitle != null) {
-                        ((EditText)findViewById(R.id.etPostTitle)).setText(aiTitle);
-                    }
-
-                    // 2. מילוי הוראות הכנה
-                    String aiInstructions = data.getStringExtra("ai_instructions");
-                    if (aiInstructions != null) {
-                        ((EditText)findViewById(R.id.etPostContent)).setText(aiInstructions);
-                    }
-
-                    // 3. מילוי מצרכים (דורש לולאה כי זו רשימה)
-                    ArrayList<String> aiIngredients = data.getStringArrayListExtra("ai_ingredients");
-                    if (aiIngredients != null) {
-                        LinearLayout container = findViewById(R.id.ingredientsContainer);
-                        container.removeAllViews(); // מנקה את מה שהיה קודם
-                        for (String ingredient : aiIngredients) {
-                            addIngredientRowFromAi(ingredient);
-                        }
-                    }
-                }
-            }
-    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,6 +108,8 @@ public class AddPostActivity extends AppCompatActivity {
             title.setText(getIntent().getStringExtra("ai_title"));
             content.setText(getIntent().getStringExtra("ai_instructions"));
             ivRecipeImage.setImageURI(getIntent().getParcelableExtra("uri_image"));
+            imagePlaceholderContainer.setVisibility(View.GONE);
+
 
             ArrayList<String> ingredients = getIntent().getStringArrayListExtra("ai_ingredients");
             if (ingredients != null) {
@@ -180,6 +152,37 @@ public class AddPostActivity extends AppCompatActivity {
             }
         });
     }
+    private final ActivityResultLauncher<Intent> aiLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+
+                    // 1. מילוי כותרת
+                    String aiTitle = data.getStringExtra("ai_title");
+                    if (aiTitle != null) {
+                        ((EditText)findViewById(R.id.etPostTitle)).setText(aiTitle);
+                    }
+
+                    // 2. מילוי הוראות הכנה
+                    String aiInstructions = data.getStringExtra("ai_instructions");
+                    if (aiInstructions != null) {
+                        ((EditText)findViewById(R.id.etPostContent)).setText(aiInstructions);
+                    }
+
+                    // 3. מילוי מצרכים (דורש לולאה כי זו רשימה)
+                    ArrayList<String> aiIngredients = data.getStringArrayListExtra("ai_ingredients");
+                    if (aiIngredients != null) {
+                        LinearLayout container = findViewById(R.id.ingredientsContainer);
+                        container.removeAllViews(); // מנקה את מה שהיה קודם
+                        for (String ingredient : aiIngredients) {
+                            addIngredientRowFromAi(ingredient);
+                        }
+                    }
+                }
+            }
+    );
+
     public void sendPost() {
         Log.d(TAG, "sendPost: start");
 
