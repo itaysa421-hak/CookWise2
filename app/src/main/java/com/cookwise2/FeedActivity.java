@@ -4,6 +4,7 @@ import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 import static com.google.firebase.firestore.DocumentChange.Type.REMOVED;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -63,6 +64,7 @@ public class FeedActivity extends AppCompatActivity {
     private String currentSearchQuery = "";
     private String currentFilterCategory = "All";
     UserImageSelector userImageSelector;
+    private Dialog scannerDialog;
 
 
 
@@ -149,37 +151,62 @@ public class FeedActivity extends AppCompatActivity {
     }
 
     private void processImageWithAi(Uri imageUri) {
-        // הצגת דיאלוג טעינה
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("AI is analyzing the dish... 🥗");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
         try {
-            // הפיכת ה-Uri ל-Bitmap
+            // 1. הפיכת ה-Uri ל-Bitmap (אנחנו צריכים אותו גם לסורק וגם ל-Gemini)
             InputStream imageStream = getContentResolver().openInputStream(imageUri);
             Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
 
+            // 2. יצירת והצגת דיאלוג הסריקה המותאם אישית
+            scannerDialog = new Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
+            scannerDialog.setContentView(R.layout.dialog_ai_scanner);
+            scannerDialog.setCancelable(false);
+
+            android.widget.ImageView ivScan = scannerDialog.findViewById(R.id.ivScanImage);
+            View scannerLine = scannerDialog.findViewById(R.id.vScannerLine);
+
+            // הצגת התמונה שבחרנו בתוך הדיאלוג
+            ivScan.setImageBitmap(bitmap);
+
+            // 3. יצירת אנימציית הלייזר (עולה ויורד)
+            android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(
+                    scannerLine, "translationY", 0f, 1000f);
+            animator.setDuration(1500);
+            animator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+            animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            animator.start();
+
+            scannerDialog.show();
+
+            // 4. שליחה ל-Gemini
             String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. " +
                     "Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
 
             GeminiManager.getInstance().sendImageAndText(bitmap, prompt, this, new GeminiManager.GeminiCallback() {
                 @Override
                 public void onSuccess(String result) {
-                    progressDialog.dismiss();
-                    handleAiResult(result, imageUri); // פונקציה שמעבירה ל-AddPost
+                    runOnUiThread(() -> {
+                        if (scannerDialog != null && scannerDialog.isShowing()) {
+                            scannerDialog.dismiss();
+                        }
+                        handleAiResult(result, imageUri);
+                    });
                 }
 
                 @Override
                 public void onError(Throwable error) {
-                    progressDialog.dismiss();
-                    Toast.makeText(FeedActivity.this, "Failed to analyze image", Toast.LENGTH_SHORT).show();
+                    runOnUiThread(() -> {
+                        if (scannerDialog != null && scannerDialog.isShowing()) {
+                            scannerDialog.dismiss();
+                        }
+                        Toast.makeText(FeedActivity.this, "AI Scan failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
                 }
             });
 
         } catch (Exception e) {
-            progressDialog.dismiss();
+            if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
             e.printStackTrace();
+            Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
         }
     }
     private void handleAiResult(String rawJson, Uri imageUri) {
