@@ -70,6 +70,7 @@
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/mainCard"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="24dp"
@@ -149,15 +150,6 @@
                     android:inputType="textMultiLine"
                     android:lineSpacingExtra="4sp" />
             </com.google.android.material.textfield.TextInputLayout>
-
-            <ProgressBar
-                android:id="@+id/pbLoading"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center"
-                android:indeterminateTint="@color/CornflowerBlue"
-                android:visibility="gone" />
-
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -173,5 +165,44 @@
         app:cornerRadius="20dp"
         app:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#F2F8F9FE"
+        android:elevation="20dp"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ProgressBar
+                android:id="@+id/pbSpinner"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:indeterminateTint="@color/CornflowerBlue" />
+
+            <TextView
+                android:id="@+id/tvLoadingMessage"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="Sharpening digital knives..."
+                android:textAlignment="center"
+                android:textColor="#1A1C1E"
+                android:textSize="18sp" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

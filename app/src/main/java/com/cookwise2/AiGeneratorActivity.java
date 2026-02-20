@@ -1,13 +1,18 @@
 package com.cookwise2;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.view.LayoutInflater;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
@@ -21,20 +26,29 @@ import java.util.ArrayList;
 
 public class AiGeneratorActivity extends AppCompatActivity {
 
-    // רכיבי ממשק למצב Vision
     private TextInputLayout tilAiVision;
     private TextInputEditText etAiVision;
-
-    // רכיבי ממשק למצב Pantry (שורות)
     private View nsvIngredients;
     private LinearLayout aiIngredientsContainer;
-
-    // רכיבים כלליים
-    private ProgressBar pbLoading;
     private MaterialButton btnGenerate;
     private MaterialButtonToggleGroup toggleAiMode;
 
     private boolean isPantryMode = false;
+
+    // רכיבי ה-Overlay המשודרגים
+    private View loadingOverlay;
+    private TextView tvLoadingMessage;
+    private ProgressBar pbSpinner; // רפרנס לספינר בשביל שינוי צבע
+    private ValueAnimator colorAnimator; // אנימטור לשינוי צבעים
+    private Handler loadingHandler = new Handler();
+    private int phraseIndex = 0;
+    private String[] loadingPhrases = {
+            "Preheating the neural networks...",
+            "Chopping digital onions (no tears!)",
+            "Seasoning the data with logic...",
+            "Consulting with the AI Head Chef...",
+            "Plating your masterpiece..."
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,29 +57,29 @@ public class AiGeneratorActivity extends AppCompatActivity {
 
         initViews();
         setupToggle();
-
-
-        // הוספת שורה ראשונה כברירת מחדל
         addIngredientRow();
 
         btnGenerate.setOnClickListener(v -> generateRecipe());
     }
 
     private void initViews() {
-        // אתחול רכיבי Vision
         tilAiVision = findViewById(R.id.tilAiVision);
         etAiVision = findViewById(R.id.etAiVision);
-
-        // אתחול רכיבי Pantry
         nsvIngredients = findViewById(R.id.nsvIngredients);
         aiIngredientsContainer = findViewById(R.id.aiIngredientsContainer);
+
         Button btnAddRow = findViewById(R.id.btnAddIngredientRow);
         btnAddRow.setOnClickListener(v -> addIngredientRow());
 
-        // אתחול כללי
-        pbLoading = findViewById(R.id.pbLoading);
         btnGenerate = findViewById(R.id.btnGenerate);
         toggleAiMode = findViewById(R.id.toggleAiMode);
+
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+        tvLoadingMessage = findViewById(R.id.tvLoadingMessage);
+
+        // מציאת הספינר בתוך ה-Overlay
+        // שים לב: וודא שב-XML של ה-loadingOverlay ה-ID של ה-ProgressBar הוא pbSpinner
+        pbSpinner = loadingOverlay.findViewById(R.id.pbSpinner);
     }
 
     private void setupToggle() {
@@ -98,7 +112,6 @@ public class AiGeneratorActivity extends AppCompatActivity {
 
     private void generateRecipe() {
         String finalInput = "";
-
         if (isPantryMode) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < aiIngredientsContainer.getChildCount(); i++) {
@@ -117,11 +130,10 @@ public class AiGeneratorActivity extends AppCompatActivity {
             return;
         }
 
-        pbLoading.setVisibility(View.VISIBLE);
+        startAiLoading();
         btnGenerate.setEnabled(false);
 
         String prompt = buildPrompt(finalInput);
-
         GeminiManager.getInstance().sendText(prompt, this, new GeminiManager.GeminiCallback() {
             @Override
             public void onSuccess(String result) {
@@ -131,7 +143,7 @@ public class AiGeneratorActivity extends AppCompatActivity {
             @Override
             public void onError(Throwable error) {
                 runOnUiThread(() -> {
-                    pbLoading.setVisibility(View.GONE);
+                    stopAiLoading();
                     btnGenerate.setEnabled(true);
                     Toast.makeText(AiGeneratorActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
                 });
@@ -167,14 +179,70 @@ public class AiGeneratorActivity extends AppCompatActivity {
                 }
                 intent.putStringArrayListExtra("ai_ingredients", ingList);
 
+                stopAiLoading();
                 setResult(RESULT_OK, intent);
                 finish();
 
             } catch (Exception e) {
-                pbLoading.setVisibility(View.GONE);
+                stopAiLoading();
                 btnGenerate.setEnabled(true);
                 Toast.makeText(this, "Failed to parse AI response. Try again.", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void startAiLoading() {
+        loadingOverlay.setVisibility(View.VISIBLE);
+        phraseIndex = 0;
+
+        // אנימציית שינוי צבעים לספינר (מחליף צבעים בצורה חלקה)
+        int color1 = Color.parseColor("#6495ED"); // CornflowerBlue
+        int color2 = Color.parseColor("#818CF8"); // Indigo/Purple
+        int color3 = Color.parseColor("#2DD4BF"); // Teal/Mint
+
+        colorAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), color1, color2, color3, color1);
+        colorAnimator.setDuration(2000); // מחזור צבעים של 4 שניות
+        colorAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        colorAnimator.addUpdateListener(animator -> {
+            int color = (int) animator.getAnimatedValue();
+            if (pbSpinner != null) {
+                pbSpinner.setIndeterminateTintList(ColorStateList.valueOf(color));
+            }
+        });
+        colorAnimator.start();
+
+        updateLoadingText();
+    }
+
+    private void updateLoadingText() {
+        if (loadingOverlay != null && loadingOverlay.getVisibility() == View.VISIBLE) {
+            // אנימציית Fade Out לטקסט הישן
+            tvLoadingMessage.animate().alpha(0f).setDuration(500).withEndAction(() -> {
+                // שינוי הטקסט כשהוא שקוף
+                tvLoadingMessage.setText(loadingPhrases[phraseIndex % loadingPhrases.length]);
+                phraseIndex++;
+                // אנימציית Fade In לטקסט החדש
+                tvLoadingMessage.animate().alpha(1f).setDuration(500).start();
+            }).start();
+
+            // הגדלנו ל-4 שניות לכל משפט כדי לתת למשתמש זמן לקרוא
+            loadingHandler.postDelayed(this::updateLoadingText, 4000);
+        }
+    }
+
+    private void stopAiLoading() {
+        if (loadingOverlay != null) {
+            loadingOverlay.setVisibility(View.GONE);
+        }
+        if (colorAnimator != null) {
+            colorAnimator.cancel();
+        }
+        loadingHandler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        stopAiLoading();
     }
 }
