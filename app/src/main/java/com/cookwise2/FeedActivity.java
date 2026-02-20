@@ -146,7 +146,8 @@ public class FeedActivity extends AppCompatActivity {
 
         });
 
-
+        //הפונקציה להעלמת הכפתורים הצפים
+        setupFabScrollBehavior();
 
     }
 
@@ -331,6 +332,40 @@ public class FeedActivity extends AppCompatActivity {
                     }
                     applyFilters(); // בכל שינוי ב-DB, נפעיל מחדש את הסינון הנוכחי
                 });
+    }
+    private void setupFabScrollBehavior() {
+        FloatingActionButton fabAiScanner = findViewById(R.id.fabAiScanner);
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAddPost = findViewById(R.id.button_addPost);
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                // dy > 0 אומר שהמשתמש גולל למטה
+                if (dy > 0) {
+                    if (fabAiScanner.isShown()) {
+                        fabAiScanner.hide();
+                    }
+                    if (btnAddPost.isExtended()) {
+                        btnAddPost.shrink(); // קודם כל נצמצם את הכפתור רק לאייקון
+                    }
+                    // אחרי חצי שנייה של גלילה, נחביא אותו לגמרי
+                    btnAddPost.hide();
+                }
+
+                // dy < 0 אומר שהמשתמש גולל למעלה
+                else if (dy < 0) {
+                    if (!fabAiScanner.isShown()) {
+                        fabAiScanner.show();
+                    }
+                    if (!btnAddPost.isShown()) {
+                        btnAddPost.show();
+                        btnAddPost.extend(); // נחזיר את הטקסט "Add Post"
+                    }
+                }
+            }
+        });
     }
 
 
