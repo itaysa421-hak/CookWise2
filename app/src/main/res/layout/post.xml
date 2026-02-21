@@ -6,15 +6,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="2dp"
+    android:layout_marginVertical="10dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="3dp"
     app:strokeWidth="1dp"
     app:strokeColor="#F0F0F0">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp">
 
         <ImageView
             android:id="@+id/iv_post_image"
@@ -22,7 +23,7 @@
             android:layout_height="0dp"
             android:scaleType="centerCrop"
             android:background="#F5F5F5"
-            app:layout_constraintDimensionRatio="H,16:9"
+            app:layout_constraintDimensionRatio="H,16:10"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -33,77 +34,122 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="#1A1A1A"
-            android:textSize="20sp"
+            android:textColor="#1A1C1E"
+            android:textSize="22sp"
             android:fontFamily="sans-serif-black"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/iv_post_image"
             tools:text="Creamy Mushroom Pasta" />
 
-        <TextView
-            android:id="@+id/tv_post_owner"
+        <LinearLayout
+            android:id="@+id/ownerContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
-            android:textColor="@color/CornflowerBlue"
-            android:textSize="13sp"
-            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_title"
-            tools:text="Chef Israel Israeli" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_post_title">
 
-        <TextView
-            android:id="@+id/tv_post_created_at"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:alpha="0.5"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_post_owner"
-            app:layout_constraintStart_toEndOf="@+id/tv_post_owner"
-            app:layout_constraintTop_toTopOf="@+id/tv_post_owner"
-            tools:text="• 2h ago" />
+            <TextView
+                android:id="@+id/tv_post_owner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/CornflowerBlue"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                tools:text="Chef Israel Israeli" />
 
-        <TextView
-            android:id="@+id/tv_post_ingredients"
+            <TextView
+                android:id="@+id/tv_post_created_at"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:alpha="0.6"
+                android:textColor="#454749"
+                android:textSize="12sp"
+                tools:text="• 2h ago" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_ingredients_section"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="6dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#455A64"
-            android:textSize="12sp"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:weightSum="3"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_owner"
-            tools:text="Ingredients: Tomato, Onion, Garlic, Pasta..." />
+            app:layout_constraintTop_toBottomOf="@+id/ownerContainer">
 
-        <TextView
-            android:id="@+id/tv_post_description"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="16dp"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:lineSpacingExtra="4dp"
-            android:textColor="#666666"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_post_ingredients"
-            tools:text="Boil water with salt, fry the onion until golden and add the mushrooms..." />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    app:tint="#757575" />
+                <TextView
+                    android:id="@+id/tv_post_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textColor="#666666"
+                    android:textSize="12sp"
+                    tools:text="30 min" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@android:drawable/btn_star_big_on"
+                    app:tint="#757575" />
+                <TextView
+                    android:id="@+id/tv_post_difficulty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textColor="#666666"
+                    android:textSize="12sp"
+                    tools:text="Medium" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@android:drawable/ic_menu_mapmode"
+                    app:tint="#757575" />
+                <TextView
+                    android:id="@+id/tv_post_cuisine"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textColor="#666666"
+                    android:textSize="12sp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    tools:text="Italian" />
+            </LinearLayout>
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

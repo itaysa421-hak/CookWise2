@@ -16,24 +16,20 @@ import com.cookwise2.R;
 import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
 
-    private static final String TAG = "PostsAdapter";
     private List<RecipePost> posts;
-    // שלב 1: הגדרת המשתנה של המאזין
     private OnItemClickListener listener;
 
-    // שלב 2: הגדרת ה-Interface ללחיצה
     public interface OnItemClickListener {
         void onItemClick(RecipePost post);
     }
 
-    // שלב 3: עדכון הבנאי (Constructor) שיקבל גם את המאזין
     public PostsAdapter(List<RecipePost> posts, OnItemClickListener listener) {
         this.posts = posts;
         this.listener = listener;
@@ -48,96 +44,73 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     @Override
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
-        Log.d(TAG, "onBindViewHolder: adding post item #" + position);
-
         RecipePost post = posts.get(position);
 
-        holder.titleTextView.setText(post.getTitle());
-        holder.descriptionTextView.setText(post.getDescription());
-        holder.groceries.setText(listGroceriesToString(post));
-        holder.ownerTextView.setText(post.getOwnerNickname());
-        holder.createdAtTextView.setText(timestampToString(post.getCreatedAt()));
+        holder.tvTitle.setText(post.getTitle());
+        holder.tvOwner.setText(post.getOwnerNickname());
+        holder.tvDate.setText(timestampToString(post.getCreatedAt()));
 
-        if(post.getImageUrl() == null)
-        {
-            Glide.with(holder.itemView.getContext()).load(R.drawable.generic_recipe_image_background).into(holder.iv_post_image);
-
-
-        }
-        else {
-
-
-            // שליפת ה-URL ישירות מהאובייקט (שמגיע מה-Firestore)
-            String potPictureUrl = post.getImageUrl();
-
-            Log.d("GlideDebug", "Loading URL: " + potPictureUrl);
-
-            Glide.with(holder.itemView.getContext()) // עדיף להשתמש ב-Context של ה-View
-                    .load(potPictureUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .error(android.R.drawable.stat_notify_error) // חשוב כדי לראות אם יש שגיאה
-                    .centerCrop()
-                    .into(holder.iv_post_image);
+        // שליפת נתונים מה-Classification (תגיות ה-AI)
+        Map<String, Object> tags = post.getClassification();
+        if (tags != null) {
+            holder.tvCuisine.setText(getStringFromMap(tags, "cuisine", "General"));
+            holder.tvDifficulty.setText(getStringFromMap(tags, "difficulty", "Easy"));
+            holder.tvTime.setText(getStringFromMap(tags, "estimated_time", "30 min"));
+        } else {
+            holder.tvCuisine.setText("Recipe");
+            holder.tvDifficulty.setText("Easy");
+            holder.tvTime.setText("---");
         }
 
+        // טעינת תמונה
+        String imageUrl = post.getImageUrl();
+        Glide.with(holder.itemView.getContext())
+                .load(imageUrl != null ? imageUrl : R.drawable.generic_recipe_image_background)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .centerCrop()
+                .into(holder.ivPostImage);
 
-        // שלב 4: הגדרת לחיצה על כל פריט ברשימה
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onItemClick(post);
-            }
+            if (listener != null) listener.onItemClick(post);
         });
+    }
+
+    // פונקציית עזר לשליפת ערך ממפה עם ברירת מחדל
+    private String getStringFromMap(Map<String, Object> map, String key, String defaultValue) {
+        if (map.containsKey(key) && map.get(key) != null) {
+            return String.valueOf(map.get(key));
+        }
+        return defaultValue;
     }
 
     @Override
     public int getItemCount() {
-        Log.d(TAG, "getItemCount: " + posts.size());
         return posts.size();
     }
 
-    public String listGroceriesToString(RecipePost post){
-        ArrayList<String> arrayPost = post.getGroceries();
-        String str = "";
-
-        if(arrayPost ==  null)
-            return str;
-        for (int i = 0; i < arrayPost.size() ; i++){
-            str += arrayPost.get(i);
-            if(i < arrayPost.size() - 1)
-                str += ", ";
-        }
-        return str;
-    }
-
     private String timestampToString(Timestamp timestamp) {
-        Date messageDate = timestamp.toDate();
-        boolean isToday = DateUtils.isToday(messageDate.getTime());
-
-        SimpleDateFormat fmt;
-        if (isToday) {
-            fmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        if (timestamp == null) return "";
+        Date date = timestamp.toDate();
+        if (DateUtils.isToday(date.getTime())) {
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
         } else {
-            fmt = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+            return new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
         }
-        return fmt.format(messageDate);
     }
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView titleTextView;
-        TextView descriptionTextView;
-        TextView groceries;
-        TextView ownerTextView;
-        TextView createdAtTextView;
-        ImageView iv_post_image;
+        TextView tvTitle, tvOwner, tvDate, tvTime, tvDifficulty, tvCuisine;
+        ImageView ivPostImage;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleTextView = itemView.findViewById(R.id.tv_post_title);
-            descriptionTextView = itemView.findViewById(R.id.tv_post_description);
-            groceries = itemView.findViewById(R.id.tv_post_ingredients);
-            ownerTextView = itemView.findViewById(R.id.tv_post_owner);
-            createdAtTextView = itemView.findViewById(R.id.tv_post_created_at);
-            iv_post_image = itemView.findViewById(R.id.iv_post_image);
+            tvTitle = itemView.findViewById(R.id.tv_post_title);
+            tvOwner = itemView.findViewById(R.id.tv_post_owner);
+            tvDate = itemView.findViewById(R.id.tv_post_created_at);
+            tvTime = itemView.findViewById(R.id.tv_post_time);
+            tvDifficulty = itemView.findViewById(R.id.tv_post_difficulty);
+            tvCuisine = itemView.findViewById(R.id.tv_post_cuisine);
+            ivPostImage = itemView.findViewById(R.id.iv_post_image);
         }
     }
 }
