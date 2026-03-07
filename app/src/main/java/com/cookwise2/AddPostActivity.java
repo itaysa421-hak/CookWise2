@@ -30,6 +30,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.cookwise2.utils.GeminiManager;
+import com.cookwise2.utils.ImageFileCreator;
 import com.cookwise2.utils.SupabaseStorageHelper;
 import com.cookwise2.utils.UserImageSelector;
 import com.google.android.material.button.MaterialButton;
@@ -250,9 +251,12 @@ public class AddPostActivity extends AppCompatActivity {
     private void uploadImageAndThenPublish(String newPostId) {
         File imageFile = userImageSelector.createImageFile();
 
-        // אם המשתמש לא בחר תמונה, עוברים ישר לפרסום הפוסט
-        if (imageFile == null) {
-            return;
+
+        if (imageFile == null ) {
+            if(getIntent().hasExtra("uri_image")){
+                imageFile = ImageFileCreator.createTempFileFromUri(getIntent().getParcelableExtra("uri_image"), this);;
+            }
+            else return;
         }
 
         String filename = "images/post-pic/" + newPostId + ".jpg";
