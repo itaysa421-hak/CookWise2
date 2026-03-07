@@ -3,57 +3,58 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#80000000">
+    android:background="#CC000000">
+
+    <TextView
+        android:id="@+id/tvAiStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="0.1"
+        android:text="AI ANALYZING"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/cvScannerContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <com.google.android.material.card.MaterialCardView
-    android:id="@+id/cvScannerContainer"
-    android:layout_width="300dp"
-    android:layout_height="400dp"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="12dp"
-    app:strokeWidth="2dp"
-    app:strokeColor="@color/CornflowerBlue"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintEnd_toEndOf="parent">
+        android:id="@+id/cvScannerContainer"
+        android:layout_width="300dp"
+        android:layout_height="400dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:strokeColor="@color/CornflowerBlue"
+        app:strokeWidth="2dp">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ImageView
-            android:id="@+id/ivScanImage"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop" />
+            android:layout_height="match_parent">
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#44000000" />
+            <ImageView
+                android:id="@+id/ivScanImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop" />
 
-        <View
-            android:id="@+id/vScannerLine"
-            android:layout_width="match_parent"
-            android:layout_height="6dp"
-            android:background="@drawable/scanner_line" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#44000000" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="24dp"
-            android:text="AI ANALYZING..."
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:letterSpacing="0.2"
-            android:fontFamily="sans-serif-black"
-            android:shadowColor="#000"
-            android:shadowDx="2"
-            android:shadowDy="2"
-            android:shadowRadius="4" />
+            <View
+                android:id="@+id/vScannerLine"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:background="@drawable/scanner_line" />
 
-    </FrameLayout>
-</com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

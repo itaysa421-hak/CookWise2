@@ -154,32 +154,44 @@ public class FeedActivity extends AppCompatActivity {
 
     private void processImageWithAi(Uri imageUri) {
         try {
-            // 1. הפיכת ה-Uri ל-Bitmap (אנחנו צריכים אותו גם לסורק וגם ל-Gemini)
             InputStream imageStream = getContentResolver().openInputStream(imageUri);
             Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
 
-            // 2. יצירת והצגת דיאלוג הסריקה המותאם אישית
             scannerDialog = new Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
             scannerDialog.setContentView(R.layout.dialog_ai_scanner);
             scannerDialog.setCancelable(false);
 
             android.widget.ImageView ivScan = scannerDialog.findViewById(R.id.ivScanImage);
             View scannerLine = scannerDialog.findViewById(R.id.vScannerLine);
+            TextView tvStatus = scannerDialog.findViewById(R.id.tvAiStatus);
 
-            // הצגת התמונה שבחרנו בתוך הדיאלוג
             ivScan.setImageBitmap(bitmap);
 
-            // 3. יצירת אנימציית הלייזר (עולה ויורד)
+            // אנימציית הלייזר
             android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(
-                    scannerLine, "translationY", 0f, 1000f);
+                    scannerLine, "translationY", 0f, 1100f); // הגדלתי מעט את הטווח שיעבור את כל הכרטיס
             animator.setDuration(1500);
             animator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
             animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
             animator.start();
 
+            // --- התוספת החדשה: אנימציית הנקודות המהבהבות ---
+            android.os.Handler dotsHandler = new android.os.Handler();
+            Runnable dotsRunnable = new Runnable() {
+                int count = 0;
+                @Override
+                public void run() {
+                    String dots = "";
+                    for (int i = 0; i < count; i++) dots += ".";
+                    tvStatus.setText("AI ANALYZING" + dots);
+                    count = (count + 1) % 4; // מחזוריות של 0, 1, 2, 3
+                    dotsHandler.postDelayed(this, 500); // עדכון כל חצי שנייה
+                }
+            };
+            dotsHandler.post(dotsRunnable);
+
             scannerDialog.show();
 
-            // 4. שליחה ל-Gemini
             String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. " +
                     "Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
 
@@ -187,9 +199,8 @@ public class FeedActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String result) {
                     runOnUiThread(() -> {
-                        if (scannerDialog != null && scannerDialog.isShowing()) {
-                            scannerDialog.dismiss();
-                        }
+                        dotsHandler.removeCallbacks(dotsRunnable); // עצירת האנימציה
+                        if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
                         handleAiResult(result, imageUri);
                     });
                 }
@@ -197,9 +208,8 @@ public class FeedActivity extends AppCompatActivity {
                 @Override
                 public void onError(Throwable error) {
                     runOnUiThread(() -> {
-                        if (scannerDialog != null && scannerDialog.isShowing()) {
-                            scannerDialog.dismiss();
-                        }
+                        dotsHandler.removeCallbacks(dotsRunnable); // עצירת האנימציה
+                        if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
                         Toast.makeText(FeedActivity.this, "AI Scan failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                     });
                 }
@@ -208,7 +218,6 @@ public class FeedActivity extends AppCompatActivity {
         } catch (Exception e) {
             if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
             e.printStackTrace();
-            Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
         }
     }
     private void handleAiResult(String rawJson, Uri imageUri) {
