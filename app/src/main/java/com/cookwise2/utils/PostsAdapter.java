@@ -31,6 +31,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     private List<RecipePost> posts;
     private OnItemClickListener listener;
     private List<String> savedPostIds;
+    private boolean isSavedTab = false;
 
     public interface OnItemClickListener {
         void onItemClick(RecipePost post);
@@ -86,7 +87,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
 
         holder.btnSave.setOnClickListener(v -> {
-            toggleSavePost(post.getId());
+            toggleSavePost(post.getId(), position); //FIXME
             // עדכון מקומי מהיר ב-UI (אופטימי)
             if (isSaved) savedPostIds.remove(post.getId());
             else savedPostIds.add(post.getId());
@@ -136,18 +137,47 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             btnSave = itemView.findViewById(R.id.btn_save_post);
         }
     }
-    public void toggleSavePost(String postId) {
+    public void toggleSavePost(String postId, int position) {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
-        // אם הפוסט כבר קיים - הסר אותו, אם לא - הוסף (Atomic update)
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            List<String> savedPosts = (List<String>) documentSnapshot.get("savedPosts");
-            if (savedPosts != null && savedPosts.contains(postId)) {
-                userRef.update("savedPosts", FieldValue.arrayRemove(postId));
-            } else {
-                userRef.update("savedPosts", FieldValue.arrayUnion(postId));
-            }
-        });
+        // בדיקה מקומית: האם הפוסט כבר שמור?
+        boolean isSaved = savedPostIds != null && savedPostIds.contains(postId);
+
+        if (isSaved) {
+            // 1. הסרה מקומית מהרשימה באדפטור
+            savedPostIds.remove(postId);
+            // 2. הסרה מה-Firestore
+            userRef.update("savedPosts", FieldValue.arrayRemove(postId));
+        } else {
+            // 1. הוספה מקומית לרשימה באדפטור
+            savedPostIds.add(postId);
+            // 2. הוספה ל-Firestore
+            userRef.update("savedPosts", FieldValue.arrayUnion(postId));
+        }
+        if (savedStatusListener != null) {
+            savedStatusListener.onSavedStatusChanged(savedPostIds.size());
+        }
+
+        // עדכון השורה הספציפית ב-RecyclerView בלבד (יעיל יותר מ-notifyDataSetChanged)
+        if (isSavedTab && isSaved) {
+            posts.remove(position);
+            notifyItemRemoved(position);
+        } else {
+            notifyItemChanged(position);
+        }
+    }
+    public void setIsSavedTab(boolean isSavedTab) {
+        this.isSavedTab = isSavedTab;
+    }
+
+    public interface OnSavedStatusChangedListener {
+        void onSavedStatusChanged(int newCount);
+    }
+
+    private OnSavedStatusChangedListener savedStatusListener;
+
+    public void setOnSavedStatusChangedListener(OnSavedStatusChangedListener listener) {
+        this.savedStatusListener = listener;
     }
 }

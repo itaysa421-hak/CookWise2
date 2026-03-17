@@ -85,16 +85,23 @@ public class ProfileActivity extends AppCompatActivity {
     private void fetchUserSavedIdsAndMyPosts() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // 1. משיכת רשימת ה-IDs השמורים
         db.collection("users").document(currentUid).get().addOnSuccessListener(doc -> {
             List<String> ids = (List<String>) doc.get("savedPosts");
+            savedPostIds.clear();
+
             if (ids != null) {
-                savedPostIds.clear();
-                savedPostIds.addAll(ids);
-                ((TextView) findViewById(R.id.tv_saved_count)).setText(String.valueOf(savedPostIds.size()));
+                // סינון: רק מזהים שאינם null ואינם ריקים
+                for (String id : ids) {
+                    if (id != null && !id.trim().isEmpty()) {
+                        savedPostIds.add(id);
+                    }
+                }
             }
 
-            // 2. אחרי שיש לנו את ה-IDs, נמשוך את "המתכונים שלי"
+            // עכשיו המספר יהיה מדויק
+            TextView tvSavedCount = findViewById(R.id.tv_saved_count);
+            tvSavedCount.setText(String.valueOf(savedPostIds.size()));
+
             loadMyPosts();
         });
     }
@@ -170,6 +177,21 @@ public class ProfileActivity extends AppCompatActivity {
             intent.putExtra("RECIPE_POST", post);
             startActivity(intent);
         });
+
+        // הגדרת המאזין לשינויים במספר השמורים
+        postsAdapter.setOnSavedStatusChangedListener(new PostsAdapter.OnSavedStatusChangedListener() {
+            @Override
+            public void onSavedStatusChanged(int newCount) {
+                // עדכון ה-TextView בזמן אמת
+                TextView tvSavedCount = findViewById(R.id.tv_saved_count);
+                tvSavedCount.setText(String.valueOf(newCount));
+            }
+        });
+
+        // בדיקה אם אנחנו בטאב השני (השמורים)
+        boolean isShowingSaved = (tabLayout.getSelectedTabPosition() == 1);
+        postsAdapter.setIsSavedTab(isShowingSaved);
+
         recyclerView.setAdapter(postsAdapter);
     }
 
