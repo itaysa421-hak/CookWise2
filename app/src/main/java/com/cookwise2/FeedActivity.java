@@ -1,5 +1,6 @@
 package com.cookwise2;
 
+import static com.bumptech.glide.load.resource.bitmap.TransformationUtils.centerCrop;
 import static com.google.firebase.firestore.DocumentChange.Type.ADDED;
 import static com.google.firebase.firestore.DocumentChange.Type.MODIFIED;
 import static com.google.firebase.firestore.DocumentChange.Type.REMOVED;
@@ -17,6 +18,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,12 +33,14 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.PostsAdapter;
 import com.cookwise2.utils.RecipePost;
 import com.cookwise2.utils.UserImageSelector;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -82,8 +86,19 @@ public class FeedActivity extends AppCompatActivity {
         });
         readUserData();
         fetchSavedPosts();
-        TextView tvHelloUser = findViewById(R.id.tv_hello_user);
-        tvHelloUser.setText("Hello, " + nickname + " 👋");
+        TextView tvUsername = findViewById(R.id.tvUsername);
+        tvUsername.setText(nickname);
+
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        ImageView ivUserImage = findViewById(R.id.ivUserImage);
+
+        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + auth.getCurrentUser().getUid() + ".jpg";
+
+        Glide.with(this) // ב-Activity משתמשים ב-this
+                .load(imageUrl)
+                .placeholder(android.R.drawable.ic_menu_gallery)
+                .circleCrop()
+                .into(ivUserImage);
 
         posts = new ArrayList<>();
 

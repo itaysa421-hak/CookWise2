@@ -34,20 +34,21 @@
                     android:paddingTop="20dp">
 
                     <ImageView
-                        android:id="@+id/ivLogo"
+                        android:id="@+id/ivUserImage"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
                         android:layout_centerVertical="true"
-                        android:src="@drawable/cookwise_logo" />
+                        android:src="@drawable/ic_person" />
 
                     <TextView
+                        android:id="@+id/tvUsername"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_toEndOf="@id/ivLogo"
+                        android:layout_toEndOf="@id/ivUserImage"
                         android:layout_marginStart="12dp"
                         android:layout_centerVertical="true"
                         android:fontFamily="sans-serif-black"
-                        android:text="CookWise"
+                        android:text="Username"
                         android:textColor="#1A1C1E"
                         android:textSize="20sp" />
 
@@ -70,27 +71,6 @@
                         app:tint="#1A1C1E" />
                 </RelativeLayout>
 
-                <TextView
-                    android:id="@+id/tv_hello_user"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="24dp"
-                    android:layout_marginTop="12dp"
-                    android:text="Hello, User 👋"
-                    android:textColor="#1A1C1E"
-                    android:textSize="30sp"
-                    android:fontFamily="sans-serif-condensed-light"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvSubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="24dp"
-                    android:layout_marginTop="4dp"
-                    android:text="What's on the menu today?"
-                    android:textColor="#6C757D"
-                    android:textSize="16sp" />
 
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/searchCard"
