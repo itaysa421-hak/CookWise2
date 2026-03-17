@@ -66,6 +66,7 @@ public class FeedActivity extends AppCompatActivity {
     private String currentFilterCategory = "All";
     UserImageSelector userImageSelector;
     private Dialog scannerDialog;
+    private List<String> savedPostIds = new ArrayList<>();
 
 
 
@@ -80,6 +81,7 @@ public class FeedActivity extends AppCompatActivity {
             return insets;
         });
         readUserData();
+        fetchSavedPosts();
         TextView tvHelloUser = findViewById(R.id.tv_hello_user);
         tvHelloUser.setText("Hello, " + nickname + " 👋");
 
@@ -118,6 +120,9 @@ public class FeedActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
+        });
+        findViewById(R.id.buttonProfile).setOnClickListener(v -> {
+            startActivity(new Intent(FeedActivity.this, ProfileActivity.class));
         });
 
         Button buttonAddPost = findViewById(R.id.button_addPost);
@@ -254,15 +259,16 @@ public class FeedActivity extends AppCompatActivity {
         Log.d(TAG, "readUserData: nickname: " + nickname);
 
     }
-    private void initRecyclerView()
-    {
+    private void initRecyclerView() {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        postsAdapter = new PostsAdapter(posts, new PostsAdapter.OnItemClickListener() {
+
+        // הוספנו את savedPostIds כפרמטר השני
+        postsAdapter = new PostsAdapter(posts, savedPostIds, new PostsAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(RecipePost post) {
                 Intent intent = new Intent(FeedActivity.this, RecipeDetailsActivity.class);
-                intent.putExtra("RECIPE_POST", post); // מעביר את כל המתכון למסך הבא
+                intent.putExtra("RECIPE_POST", post);
                 startActivity(intent);
             }
         });
@@ -376,6 +382,23 @@ public class FeedActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+    private void fetchSavedPosts() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("users").document(uid)
+                .addSnapshotListener((documentSnapshot, e) -> {
+                    if (e != null || documentSnapshot == null) return;
+
+                    List<String> fetchedIds = (List<String>) documentSnapshot.get("savedPosts");
+                    if (fetchedIds != null) {
+                        savedPostIds.clear();
+                        savedPostIds.addAll(fetchedIds);
+                        // עדכון האדפטור שהנתונים השתנו
+                        if (postsAdapter != null) {
+                            postsAdapter.notifyDataSetChanged();
+                        }
+                    }
+                });
     }
 
 

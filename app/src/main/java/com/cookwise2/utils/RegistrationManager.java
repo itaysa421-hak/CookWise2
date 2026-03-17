@@ -13,6 +13,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -188,6 +189,7 @@ public class RegistrationManager {
         Log.d(TAG, "Saving user to Firestore. UID: " + userId + ", Nickname: " + nickname);
         Map<String, Object> userMap = new HashMap<>();
         userMap.put("nickname", nickname);
+        userMap.put("savedPosts", new ArrayList<String>()); // יוצר רשימה ריקה ב-DB
 
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();

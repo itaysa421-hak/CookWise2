@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,6 +15,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.cookwise2.R;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,13 +30,15 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     private List<RecipePost> posts;
     private OnItemClickListener listener;
+    private List<String> savedPostIds;
 
     public interface OnItemClickListener {
         void onItemClick(RecipePost post);
     }
 
-    public PostsAdapter(List<RecipePost> posts, OnItemClickListener listener) {
+    public PostsAdapter(List<RecipePost> posts, List<String> savedPostIds, OnItemClickListener listener) {
         this.posts = posts;
+        this.savedPostIds = savedPostIds;
         this.listener = listener;
     }
 
@@ -73,6 +80,20 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(post);
         });
+
+        boolean isSaved = savedPostIds != null && savedPostIds.contains(post.getId());
+        holder.btnSave.setImageResource(isSaved ?
+                android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+
+        holder.btnSave.setOnClickListener(v -> {
+            toggleSavePost(post.getId());
+            // עדכון מקומי מהיר ב-UI (אופטימי)
+            if (isSaved) savedPostIds.remove(post.getId());
+            else savedPostIds.add(post.getId());
+            notifyItemChanged(position);
+        });
+
+
     }
 
     // פונקציית עזר לשליפת ערך ממפה עם ברירת מחדל
@@ -101,6 +122,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvOwner, tvDate, tvTime, tvDifficulty, tvCuisine;
         ImageView ivPostImage;
+        ImageButton btnSave;
 
         public PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -111,6 +133,21 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             tvDifficulty = itemView.findViewById(R.id.tv_post_difficulty);
             tvCuisine = itemView.findViewById(R.id.tv_post_cuisine);
             ivPostImage = itemView.findViewById(R.id.iv_post_image);
+            btnSave = itemView.findViewById(R.id.btn_save_post);
         }
+    }
+    public void toggleSavePost(String postId) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
+
+        // אם הפוסט כבר קיים - הסר אותו, אם לא - הוסף (Atomic update)
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            List<String> savedPosts = (List<String>) documentSnapshot.get("savedPosts");
+            if (savedPosts != null && savedPosts.contains(postId)) {
+                userRef.update("savedPosts", FieldValue.arrayRemove(postId));
+            } else {
+                userRef.update("savedPosts", FieldValue.arrayUnion(postId));
+            }
+        });
     }
 }
