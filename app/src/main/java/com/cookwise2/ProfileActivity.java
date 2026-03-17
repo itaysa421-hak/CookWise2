@@ -7,7 +7,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.firebase.firestore.FieldPath;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,10 +27,9 @@ import java.util.List;
 public class ProfileActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private PostsAdapter postsAdapter;
-    private List<RecipePost> myPosts = new ArrayList<>();
-    private List<RecipePost> savedPosts = new ArrayList<>();
-    private List<String> savedPostIds = new ArrayList<>();
+    private final List<RecipePost> myPosts = new ArrayList<>();
+    private final List<RecipePost> savedPosts = new ArrayList<>();
+    private final List<String> savedPostIds = new ArrayList<>();
     private String currentUid;
     private TabLayout tabLayout;
 
@@ -73,8 +72,13 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
 
-            @Override public void onTabUnselected(TabLayout.Tab tab) {}
-            @Override public void onTabReselected(TabLayout.Tab tab) {}
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
     }
 
@@ -87,7 +91,7 @@ public class ProfileActivity extends AppCompatActivity {
             if (ids != null) {
                 savedPostIds.clear();
                 savedPostIds.addAll(ids);
-                ((TextView)findViewById(R.id.tv_saved_count)).setText(String.valueOf(savedPostIds.size()));
+                ((TextView) findViewById(R.id.tv_saved_count)).setText(String.valueOf(savedPostIds.size()));
             }
 
             // 2. אחרי שיש לנו את ה-IDs, נמשוך את "המתכונים שלי"
@@ -106,7 +110,7 @@ public class ProfileActivity extends AppCompatActivity {
                         post.setId(doc.getId());
                         myPosts.add(post);
                     }
-                    ((TextView)findViewById(R.id.tv_recipe_count)).setText(String.valueOf(myPosts.size()));
+                    ((TextView) findViewById(R.id.tv_recipe_count)).setText(String.valueOf(myPosts.size()));
 
                     // כברירת מחדל מציגים את הטאב הראשון (My Recipes)
                     if (tabLayout.getSelectedTabPosition() == 0) {
@@ -161,13 +165,14 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void updateAdapter(List<RecipePost> listToShow) {
-        postsAdapter = new PostsAdapter(listToShow, savedPostIds, post -> {
+        PostsAdapter postsAdapter = new PostsAdapter(listToShow, savedPostIds, post -> {
             Intent intent = new Intent(this, RecipeDetailsActivity.class);
             intent.putExtra("RECIPE_POST", post);
             startActivity(intent);
         });
         recyclerView.setAdapter(postsAdapter);
     }
+
     private void setupProfileInfo() {
         // 1. גישה ל-Views
         ImageView ivProfile = findViewById(R.id.iv_profile_image);
