@@ -1,7 +1,6 @@
 package com.cookwise2.utils;
 
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +29,17 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     private List<RecipePost> posts;
     private OnItemClickListener listener;
+    private OnUserClickListener userClickListener; // מאזין חדש
     private List<String> savedPostIds;
     private boolean isSavedTab = false;
 
     public interface OnItemClickListener {
         void onItemClick(RecipePost post);
+    }
+
+    // ממשק חדש למעבר לפרופיל
+    public interface OnUserClickListener {
+        void onUserClick(String uid);
     }
 
     public PostsAdapter(List<RecipePost> posts, List<String> savedPostIds, OnItemClickListener listener) {
@@ -43,10 +48,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         this.listener = listener;
     }
 
+    // Setter למאזין המשתמש
+    public void setOnUserClickListener(OnUserClickListener userClickListener) {
+        this.userClickListener = userClickListener;
+    }
+
     @NonNull
     @Override
     public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // וודא ששם ה-Layout הוא item_post כפי שעיצבנו קודם
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.post, parent, false);
         return new PostViewHolder(view);
     }
@@ -59,7 +68,13 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvOwner.setText(post.getOwnerNickname());
         holder.tvDate.setText(timestampToString(post.getCreatedAt()));
 
-        // שליפת נתונים מה-Classification
+        // לחיצה על שם המשתמש למעבר לפרופיל
+        holder.tvOwner.setOnClickListener(v -> {
+            if (userClickListener != null) {
+                userClickListener.onUserClick(post.getOwnerUid());
+            }
+        });
+
         Map<String, Object> tags = post.getClassification();
         if (tags != null) {
             holder.tvCuisine.setText(getStringFromMap(tags, "cuisine", "General"));
@@ -71,7 +86,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.tvTime.setText("---");
         }
 
-        // טעינת תמונה עם Glide
         String imageUrl = post.getImageUrl();
         Glide.with(holder.itemView.getContext())
                 .load(imageUrl != null && !imageUrl.isEmpty() ? imageUrl : R.drawable.generic_recipe_image_background)
@@ -79,24 +93,21 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
                 .centerCrop()
                 .into(holder.ivPostImage);
 
-        // עדכון מצב האייקון של השמירה
         boolean isSaved = savedPostIds != null && savedPostIds.contains(post.getId());
         holder.btnSave.setImageResource(isSaved ?
                 R.drawable.ic_bookmark_filled : R.drawable.ic_bookmark_border);
 
-        // לחיצה על כל הפוסט (למעבר לפרטים)
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(post);
         });
 
-        // לחיצה על כפתור השמירה
         holder.btnSave.setOnClickListener(v -> {
             toggleSavePost(post.getId(), position);
         });
     }
 
     private String getStringFromMap(Map<String, Object> map, String key, String defaultValue) {
-        if (map.containsKey(key) && map.get(key) != null) {
+        if (map != null && map.containsKey(key) && map.get(key) != null) {
             return String.valueOf(map.get(key));
         }
         return defaultValue;
@@ -135,33 +146,26 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         }
     }
 
-    /**
-     * פונקציה לניהול שמירה/ביטול שמירה של פוסט
-     */
     public void toggleSavePost(String postId, int position) {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(currentUserId);
 
         boolean isSaved = savedPostIds != null && savedPostIds.contains(postId);
 
         if (isSaved) {
-            // הסרה: עדכון מקומי ועדכון בשרת
             if (savedPostIds != null) savedPostIds.remove(postId);
             userRef.update("savedPosts", FieldValue.arrayRemove(postId));
         } else {
-            // הוספה: עדכון מקומי ועדכון בשרת
             if (savedPostIds != null) savedPostIds.add(postId);
             userRef.update("savedPosts", FieldValue.arrayUnion(postId));
         }
 
-        // דיווח למאזין חיצוני (למשל לעדכון טאב ה-Saved)
         if (savedStatusListener != null) {
             savedStatusListener.onSavedStatusChanged(savedPostIds.size());
         }
 
-        // עדכון ויזואלי של השורה בלבד
         if (isSavedTab && isSaved) {
             posts.remove(position);
             notifyItemRemoved(position);

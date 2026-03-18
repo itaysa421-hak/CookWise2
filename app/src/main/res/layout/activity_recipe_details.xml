@@ -7,107 +7,136 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <androidx.core.widget.NestedScrollView
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="350dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
-        <LinearLayout
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsing_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:titleEnabled="false">
 
             <ImageView
                 android:id="@+id/ivDetailImage"
                 android:layout_width="match_parent"
-                android:layout_height="320dp"
+                android:layout_height="match_parent"
                 android:scaleType="centerCrop"
+                app:layout_collapseMode="parallax"
                 tools:src="@tools:sample/backgrounds/scenic" />
 
-            <LinearLayout
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/bottom_gradient" />
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:navigationIcon="@drawable/ic_back" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:id="@+id/tvDetailTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:fontFamily="sans-serif-black"
+                android:textColor="#1A1A1A"
+                android:textSize="28sp"
+                android:letterSpacing="-0.02"
+                tools:text="Creamy Mushroom Pasta" />
 
-                <TextView
-                    android:id="@+id/tvDetailTitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:textColor="#1A1A1A"
-                    android:textSize="28sp"
-                    tools:text="Creamy Mushroom Pasta" />
+            <TextView
+                android:id="@+id/tvDetailOwner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#5C6BC0"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="By Chef Israel Israeli" />
 
-                <TextView
-                    android:id="@+id/tvDetailOwner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:textColor="@color/CornflowerBlue"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    tools:text="By Chef Israel Israeli" />
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cgDetailsCategories"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:chipSpacingHorizontal="8dp" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="24dp"
+                android:background="#F0F0F0" />
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/cgDetailsCategories"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="4dp"
-                    app:lineSpacing="8dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ingredients"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:textColor="#1A1A1A"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginBottom="12dp" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginVertical="20dp"
-                    android:background="#EEEEEE" />
+            <TextView
+                android:id="@+id/tvDetailIngredients"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_section_card"
+                android:padding="16dp"
+                android:lineSpacingExtra="6dp"
+                android:elevation="1dp"
+                android:textColor="#455A64"
+                android:textSize="16sp"
+                tools:text="• 500g Pasta\n• 200ml Cream" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Preparation"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:textColor="#1A1A1A"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="12dp" />
 
+            <TextView
+                android:id="@+id/tvDetailDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="8dp"
+                android:textColor="#333333"
+                android:textSize="16sp"
+                tools:text="Start by boiling water... then fry the mushrooms until golden brown..." />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="40dp" />
 
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ingredients"
-                    android:textColor="#1A1A1A"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:id="@+id/tvDetailIngredients"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_ingredients_section"
-                    android:padding="16dp"
-                    android:lineSpacingExtra="4dp"
-                    android:textColor="#455A64"
-                    android:textSize="15sp"
-                    tools:text="• 500g Pasta\n• 200ml Cream\n• Mushrooms" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Instructions"
-                    android:textColor="#1A1A1A"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginTop="24dp"
-                    android:layout_marginBottom="12dp" />
-
-                <TextView
-                    android:id="@+id/tvDetailDescription"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lineSpacingExtra="6dp"
-                    android:textColor="#444444"
-                    android:textSize="16sp"
-                    tools:text="Start by boiling water... then fry the mushrooms until golden brown..." />
-
-            </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

@@ -150,6 +150,12 @@ public class FeedActivity extends AppCompatActivity {
             }
         });
 
+        postsAdapter.setOnUserClickListener(uid -> {
+            Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
+            intent.putExtra("EXTRA_USER_ID", uid); // שליחת ה-ID של בעל הפוסט
+            startActivity(intent);
+        });
+
 
 // 2. חיבור הכפתור ב-onCreate
         userImageSelector = new UserImageSelector(this, null);

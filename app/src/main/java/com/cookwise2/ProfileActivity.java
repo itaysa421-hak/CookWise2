@@ -3,6 +3,7 @@ package com.cookwise2;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -29,8 +30,9 @@ public class ProfileActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private final List<RecipePost> myPosts = new ArrayList<>();
     private final List<RecipePost> savedPosts = new ArrayList<>();
-    private final List<String> savedPostIds = new ArrayList<>();
-    private String currentUid;
+    private final List<String> currentUserSavedIds = new ArrayList<>();
+    private String profileUid; // ה-UID של הפרופיל שאותו מציגים
+    private boolean isMyOwnProfile;
     private TabLayout tabLayout;
 
     @Override
@@ -38,77 +40,73 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        // בדיקה: האם הגענו לפרופיל של מישהו אחר או לפרופיל האישי?
+        String targetUid = getIntent().getStringExtra("EXTRA_USER_ID");
+        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        setupProfileInfo(); // הפונקציה שכבר תיקנו קודם
+        if (targetUid != null && !targetUid.equals(myUid)) {
+            profileUid = targetUid;
+            isMyOwnProfile = false;
+        } else {
+            profileUid = myUid;
+            isMyOwnProfile = true;
+        }
+
+        tabLayout = findViewById(R.id.tabLayout);
+        if (!isMyOwnProfile) {
+            tabLayout.setVisibility(View.GONE); // מסתירים טאבים בפרופיל של אחרים
+        }
+
+        setupProfileInfo();
         initRecyclerView();
         setupTabs();
 
-        // טעינה ראשונית של הנתונים
-        fetchUserSavedIdsAndMyPosts();
+        // טעינת מזהי השמורים של המשתמש המחובר (כדי שהכפתור יראה נכון בפיד שלהם)
+        fetchCurrentUserSavedIds();
     }
 
     private void initRecyclerView() {
         recyclerView = findViewById(R.id.recycler_profile);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        // בהתחלה נציג רשימה ריקה, היא תתעדכן כשנמשוך נתונים
     }
 
     private void setupTabs() {
-        tabLayout = findViewById(R.id.tabLayout);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 if (tab.getPosition() == 0) {
-                    // הצגת המתכונים שלי
                     updateAdapter(myPosts);
                 } else {
-                    // הצגת השמורים
-                    if (savedPosts.isEmpty() && !savedPostIds.isEmpty()) {
-                        loadSavedPosts(); // טעינה מה-DB רק אם עוד לא טענו
+                    if (savedPosts.isEmpty() && !currentUserSavedIds.isEmpty()) {
+                        loadSavedPosts();
                     } else {
                         updateAdapter(savedPosts);
                     }
                 }
             }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
-    private void fetchUserSavedIdsAndMyPosts() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        db.collection("users").document(currentUid).get().addOnSuccessListener(doc -> {
+    private void fetchCurrentUserSavedIds() {
+        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("users").document(myUid).get().addOnSuccessListener(doc -> {
             List<String> ids = (List<String>) doc.get("savedPosts");
-            savedPostIds.clear();
-
+            currentUserSavedIds.clear();
             if (ids != null) {
-                // סינון: רק מזהים שאינם null ואינם ריקים
                 for (String id : ids) {
-                    if (id != null && !id.trim().isEmpty()) {
-                        savedPostIds.add(id);
-                    }
+                    if (id != null) currentUserSavedIds.add(id);
                 }
             }
-
-            // עכשיו המספר יהיה מדויק
-            TextView tvSavedCount = findViewById(R.id.tv_saved_count);
-            tvSavedCount.setText(String.valueOf(savedPostIds.size()));
-
-            loadMyPosts();
+            // אחרי שיש לנו את השמורים שלנו, נטען את המתכונים של הפרופיל הנוכחי
+            loadProfilePosts();
         });
     }
 
-    private void loadMyPosts() {
+    private void loadProfilePosts() {
         FirebaseFirestore.getInstance().collection("posts")
-                .whereEqualTo("ownerUid", currentUid)
+                .whereEqualTo("ownerUid", profileUid)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     myPosts.clear();
@@ -118,43 +116,18 @@ public class ProfileActivity extends AppCompatActivity {
                         myPosts.add(post);
                     }
                     ((TextView) findViewById(R.id.tv_recipe_count)).setText(String.valueOf(myPosts.size()));
-
-                    // כברירת מחדל מציגים את הטאב הראשון (My Recipes)
-                    if (tabLayout.getSelectedTabPosition() == 0) {
-                        updateAdapter(myPosts);
-                    }
+                    updateAdapter(myPosts);
                 });
     }
 
     private void loadSavedPosts() {
-        // 1. הגנה בסיסית - האם הרשימה בכלל קיימת?
-        if (savedPostIds == null || savedPostIds.isEmpty()) {
+        if (currentUserSavedIds.isEmpty()) {
             updateAdapter(new ArrayList<>());
             return;
         }
 
-        // 2. ניקוי הרשימה - מוודאים שאין ערכי null או מחרוזות ריקות
-        List<String> cleanIds = new ArrayList<>();
-        for (String id : savedPostIds) {
-            if (id != null && !id.trim().isEmpty()) {
-                cleanIds.add(id);
-            }
-        }
-
-        // 3. בדיקה נוספת - האם נשארו מזהים תקינים אחרי הניקוי?
-        if (cleanIds.isEmpty()) {
-            updateAdapter(new ArrayList<>());
-            return;
-        }
-
-        // 4. הגבלת כמות (מגבלת Firestore של 30 פריטים ב-whereIn)
-        if (cleanIds.size() > 30) {
-            cleanIds = cleanIds.subList(0, 30);
-        }
-
-        // 5. ביצוע השאילתה עם הרשימה הנקייה
         FirebaseFirestore.getInstance().collection("posts")
-                .whereIn(FieldPath.documentId(), cleanIds)
+                .whereIn(FieldPath.documentId(), currentUserSavedIds)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     savedPosts.clear();
@@ -164,70 +137,49 @@ public class ProfileActivity extends AppCompatActivity {
                         savedPosts.add(post);
                     }
                     updateAdapter(savedPosts);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ProfileActivity", "Error loading saved posts", e);
-                    Toast.makeText(this, "Error loading saved recipes", Toast.LENGTH_SHORT).show();
                 });
     }
 
     private void updateAdapter(List<RecipePost> listToShow) {
-        PostsAdapter postsAdapter = new PostsAdapter(listToShow, savedPostIds, post -> {
+        // שים לב: אנחנו תמיד מעבירים את currentUserSavedIds כדי שנוכל לשמור מתכונים של אחרים מהפרופיל שלהם
+        PostsAdapter postsAdapter = new PostsAdapter(listToShow, currentUserSavedIds, post -> {
             Intent intent = new Intent(this, RecipeDetailsActivity.class);
             intent.putExtra("RECIPE_POST", post);
             startActivity(intent);
         });
 
-        // הגדרת המאזין לשינויים במספר השמורים
-        postsAdapter.setOnSavedStatusChangedListener(new PostsAdapter.OnSavedStatusChangedListener() {
-            @Override
-            public void onSavedStatusChanged(int newCount) {
-                // עדכון ה-TextView בזמן אמת
-                TextView tvSavedCount = findViewById(R.id.tv_saved_count);
-                tvSavedCount.setText(String.valueOf(newCount));
+        // טיפול בלחיצה על שם משתמש בתוך הפרופיל (אם לוחצים על שם אחר בתוך רשימה)
+        postsAdapter.setOnUserClickListener(uid -> {
+            if (!uid.equals(profileUid)) {
+                Intent intent = new Intent(this, ProfileActivity.class);
+                intent.putExtra("EXTRA_USER_ID", uid);
+                startActivity(intent);
             }
         });
-
-        // בדיקה אם אנחנו בטאב השני (השמורים)
-        boolean isShowingSaved = (tabLayout.getSelectedTabPosition() == 1);
-        postsAdapter.setIsSavedTab(isShowingSaved);
 
         recyclerView.setAdapter(postsAdapter);
     }
 
     private void setupProfileInfo() {
-        // 1. גישה ל-Views
         ImageView ivProfile = findViewById(R.id.iv_profile_image);
         TextView tvName = findViewById(R.id.tv_profile_name);
-        ImageButton btnBack = findViewById(R.id.btn_back);
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        // 2. כפתור חזור פשוט
-        btnBack.setOnClickListener(v -> finish());
-
-        // 3. משיכת נתונים מ-Firestore
-        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        FirebaseFirestore.getInstance().collection("users").document(currentUid)
+        FirebaseFirestore.getInstance().collection("users").document(profileUid)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // עדכון השם
                         String name = documentSnapshot.getString("nickname");
                         tvName.setText(name != null ? name : "Chef");
 
-                        // עדכון התמונה בעזרת Glide (הנתיב ב-Supabase שמרנו לפי UID)
-                        // הערה: אם שמרת את ה-URL בתוך ה-Document, משוך אותו כאן
-                        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + currentUid + ".jpg";
+                        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + profileUid + ".jpg";
 
                         Glide.with(this)
                                 .load(imageUrl)
-                                .placeholder(R.drawable.cookwise_logo) // תמונת ברירת מחדל
+                                .placeholder(R.drawable.cookwise_logo)
                                 .circleCrop()
                                 .into(ivProfile);
                     }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ProfileActivity", "Error loading profile", e);
-                    tvName.setText("Error loading profile");
                 });
     }
 }
