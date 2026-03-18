@@ -46,6 +46,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
     @NonNull
     @Override
     public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // וודא ששם ה-Layout הוא item_post כפי שעיצבנו קודם
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.post, parent, false);
         return new PostViewHolder(view);
     }
@@ -58,7 +59,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         holder.tvOwner.setText(post.getOwnerNickname());
         holder.tvDate.setText(timestampToString(post.getCreatedAt()));
 
-        // שליפת נתונים מה-Classification (תגיות ה-AI)
+        // שליפת נתונים מה-Classification
         Map<String, Object> tags = post.getClassification();
         if (tags != null) {
             holder.tvCuisine.setText(getStringFromMap(tags, "cuisine", "General"));
@@ -70,34 +71,30 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             holder.tvTime.setText("---");
         }
 
-        // טעינת תמונה
+        // טעינת תמונה עם Glide
         String imageUrl = post.getImageUrl();
         Glide.with(holder.itemView.getContext())
-                .load(imageUrl != null ? imageUrl : R.drawable.generic_recipe_image_background)
+                .load(imageUrl != null && !imageUrl.isEmpty() ? imageUrl : R.drawable.generic_recipe_image_background)
                 .placeholder(android.R.drawable.ic_menu_gallery)
                 .centerCrop()
                 .into(holder.ivPostImage);
 
+        // עדכון מצב האייקון של השמירה
+        boolean isSaved = savedPostIds != null && savedPostIds.contains(post.getId());
+        holder.btnSave.setImageResource(isSaved ?
+                R.drawable.ic_bookmark_filled : R.drawable.ic_bookmark_border);
+
+        // לחיצה על כל הפוסט (למעבר לפרטים)
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(post);
         });
 
-        boolean isSaved = savedPostIds != null && savedPostIds.contains(post.getId());
-        holder.btnSave.setImageResource(isSaved ?
-                android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
-
+        // לחיצה על כפתור השמירה
         holder.btnSave.setOnClickListener(v -> {
-            toggleSavePost(post.getId(), position); //FIXME
-            // עדכון מקומי מהיר ב-UI (אופטימי)
-            if (isSaved) savedPostIds.remove(post.getId());
-            else savedPostIds.add(post.getId());
-            notifyItemChanged(position);
+            toggleSavePost(post.getId(), position);
         });
-
-
     }
 
-    // פונקציית עזר לשליפת ערך ממפה עם ברירת מחדל
     private String getStringFromMap(Map<String, Object> map, String key, String defaultValue) {
         if (map.containsKey(key) && map.get(key) != null) {
             return String.valueOf(map.get(key));
@@ -107,14 +104,14 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
 
     @Override
     public int getItemCount() {
-        return posts.size();
+        return posts != null ? posts.size() : 0;
     }
 
     private String timestampToString(Timestamp timestamp) {
         if (timestamp == null) return "";
         Date date = timestamp.toDate();
         if (DateUtils.isToday(date.getTime())) {
-            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
+            return "Today, " + new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
         } else {
             return new SimpleDateFormat("MMM d", Locale.getDefault()).format(date);
         }
@@ -137,29 +134,34 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             btnSave = itemView.findViewById(R.id.btn_save_post);
         }
     }
+
+    /**
+     * פונקציה לניהול שמירה/ביטול שמירה של פוסט
+     */
     public void toggleSavePost(String postId, int position) {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
+
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DocumentReference userRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
-        // בדיקה מקומית: האם הפוסט כבר שמור?
         boolean isSaved = savedPostIds != null && savedPostIds.contains(postId);
 
         if (isSaved) {
-            // 1. הסרה מקומית מהרשימה באדפטור
-            savedPostIds.remove(postId);
-            // 2. הסרה מה-Firestore
+            // הסרה: עדכון מקומי ועדכון בשרת
+            if (savedPostIds != null) savedPostIds.remove(postId);
             userRef.update("savedPosts", FieldValue.arrayRemove(postId));
         } else {
-            // 1. הוספה מקומית לרשימה באדפטור
-            savedPostIds.add(postId);
-            // 2. הוספה ל-Firestore
+            // הוספה: עדכון מקומי ועדכון בשרת
+            if (savedPostIds != null) savedPostIds.add(postId);
             userRef.update("savedPosts", FieldValue.arrayUnion(postId));
         }
+
+        // דיווח למאזין חיצוני (למשל לעדכון טאב ה-Saved)
         if (savedStatusListener != null) {
             savedStatusListener.onSavedStatusChanged(savedPostIds.size());
         }
 
-        // עדכון השורה הספציפית ב-RecyclerView בלבד (יעיל יותר מ-notifyDataSetChanged)
+        // עדכון ויזואלי של השורה בלבד
         if (isSavedTab && isSaved) {
             posts.remove(position);
             notifyItemRemoved(position);
@@ -167,6 +169,7 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             notifyItemChanged(position);
         }
     }
+
     public void setIsSavedTab(boolean isSavedTab) {
         this.isSavedTab = isSavedTab;
     }

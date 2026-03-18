@@ -216,7 +216,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                         // עדכון התמונה בעזרת Glide (הנתיב ב-Supabase שמרנו לפי UID)
                         // הערה: אם שמרת את ה-URL בתוך ה-Document, משוך אותו כאן
-                        String imageUrl = "https://your-supabase-url.com/storage/v1/object/public/images/profile-pics/" + currentUid + ".jpg";
+                        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + currentUid + ".jpg";
 
                         Glide.with(this)
                                 .load(imageUrl)

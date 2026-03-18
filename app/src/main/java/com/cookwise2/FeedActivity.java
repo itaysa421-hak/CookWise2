@@ -88,12 +88,11 @@ public class FeedActivity extends AppCompatActivity {
         fetchSavedPosts();
         TextView tvUsername = findViewById(R.id.tvUsername);
         tvUsername.setText(nickname);
-
-        FirebaseAuth auth = FirebaseAuth.getInstance();
         ImageView ivUserImage = findViewById(R.id.ivUserImage);
 
-        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + auth.getCurrentUser().getUid() + ".jpg";
 
+        String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + currentUid + ".jpg";
         Glide.with(this) // ב-Activity משתמשים ב-this
                 .load(imageUrl)
                 .placeholder(android.R.drawable.ic_menu_gallery)
@@ -136,8 +135,10 @@ public class FeedActivity extends AppCompatActivity {
                 finish();
             }
         });
-        findViewById(R.id.buttonProfile).setOnClickListener(v -> {
-            startActivity(new Intent(FeedActivity.this, ProfileActivity.class));
+        View userProfileContainer = findViewById(R.id.userProfileContainer);
+        userProfileContainer.setOnClickListener(v -> {
+            Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
+            startActivity(intent);
         });
 
         Button buttonAddPost = findViewById(R.id.button_addPost);
