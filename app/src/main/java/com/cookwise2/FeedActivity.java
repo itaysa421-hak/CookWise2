@@ -93,6 +93,7 @@ public class FeedActivity extends AppCompatActivity {
 
         String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + currentUid + ".jpg";
+        Log.d(TAG, "onCreate: imageUrl: " + imageUrl);
         Glide.with(this) // ב-Activity משתמשים ב-this
                 .load(imageUrl)
                 .placeholder(android.R.drawable.ic_menu_gallery)
