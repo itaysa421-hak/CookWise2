@@ -2,12 +2,11 @@ package com.cookwise2;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,10 +27,12 @@ import java.util.List;
 public class ProfileActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
+    private LinearLayout layoutEmptyState;
+    private TextView tvEmptyMessage;
     private final List<RecipePost> myPosts = new ArrayList<>();
     private final List<RecipePost> savedPosts = new ArrayList<>();
     private final List<String> currentUserSavedIds = new ArrayList<>();
-    private String profileUid; // ה-UID של הפרופיל שאותו מציגים
+    private String profileUid;
     private boolean isMyOwnProfile;
     private TabLayout tabLayout;
 
@@ -40,7 +41,6 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        // בדיקה: האם הגענו לפרופיל של מישהו אחר או לפרופיל האישי?
         String targetUid = getIntent().getStringExtra("EXTRA_USER_ID");
         String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
@@ -53,15 +53,16 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         tabLayout = findViewById(R.id.tabLayout);
+        layoutEmptyState = findViewById(R.id.layout_empty_state);
+        tvEmptyMessage = findViewById(R.id.tv_empty_message);
+
         if (!isMyOwnProfile) {
-            tabLayout.setVisibility(View.GONE); // מסתירים טאבים בפרופיל של אחרים
+            tabLayout.setVisibility(View.GONE);
         }
 
         setupProfileInfo();
         initRecyclerView();
         setupTabs();
-
-        // טעינת מזהי השמורים של המשתמש המחובר (כדי שהכפתור יראה נכון בפיד שלהם)
         fetchCurrentUserSavedIds();
     }
 
@@ -99,7 +100,9 @@ public class ProfileActivity extends AppCompatActivity {
                     if (id != null) currentUserSavedIds.add(id);
                 }
             }
-            // אחרי שיש לנו את השמורים שלנו, נטען את המתכונים של הפרופיל הנוכחי
+            TextView tvSavedCount = findViewById(R.id.tv_saved_count);
+            tvSavedCount.setText(String.valueOf(currentUserSavedIds.size()));
+
             loadProfilePosts();
         });
     }
@@ -116,7 +119,10 @@ public class ProfileActivity extends AppCompatActivity {
                         myPosts.add(post);
                     }
                     ((TextView) findViewById(R.id.tv_recipe_count)).setText(String.valueOf(myPosts.size()));
-                    updateAdapter(myPosts);
+
+                    if (tabLayout.getSelectedTabPosition() == 0) {
+                        updateAdapter(myPosts);
+                    }
                 });
     }
 
@@ -136,28 +142,43 @@ public class ProfileActivity extends AppCompatActivity {
                         post.setId(doc.getId());
                         savedPosts.add(post);
                     }
-                    updateAdapter(savedPosts);
+                    if (tabLayout.getSelectedTabPosition() == 1) {
+                        updateAdapter(savedPosts);
+                    }
                 });
     }
 
     private void updateAdapter(List<RecipePost> listToShow) {
-        // שים לב: אנחנו תמיד מעבירים את currentUserSavedIds כדי שנוכל לשמור מתכונים של אחרים מהפרופיל שלהם
-        PostsAdapter postsAdapter = new PostsAdapter(listToShow, currentUserSavedIds, post -> {
-            Intent intent = new Intent(this, RecipeDetailsActivity.class);
-            intent.putExtra("RECIPE_POST", post);
-            startActivity(intent);
-        });
+        if (listToShow.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            layoutEmptyState.setVisibility(View.VISIBLE);
 
-        // טיפול בלחיצה על שם משתמש בתוך הפרופיל (אם לוחצים על שם אחר בתוך רשימה)
-        postsAdapter.setOnUserClickListener(uid -> {
-            if (!uid.equals(profileUid)) {
-                Intent intent = new Intent(this, ProfileActivity.class);
-                intent.putExtra("EXTRA_USER_ID", uid);
-                startActivity(intent);
+            // שינוי הטקסט בהתאם לטאב
+            if (tabLayout.getSelectedTabPosition() == 1) {
+                tvEmptyMessage.setText("No saved recipes yet");
+            } else {
+                tvEmptyMessage.setText(isMyOwnProfile ? "You haven't posted any recipes yet" : "This chef hasn't posted anything yet");
             }
-        });
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            layoutEmptyState.setVisibility(View.GONE);
 
-        recyclerView.setAdapter(postsAdapter);
+            PostsAdapter postsAdapter = new PostsAdapter(listToShow, currentUserSavedIds, post -> {
+                Intent intent = new Intent(this, RecipeDetailsActivity.class);
+                intent.putExtra("RECIPE_POST", post);
+                startActivity(intent);
+            });
+
+            postsAdapter.setOnUserClickListener(uid -> {
+                if (!uid.equals(profileUid)) {
+                    Intent intent = new Intent(this, ProfileActivity.class);
+                    intent.putExtra("EXTRA_USER_ID", uid);
+                    startActivity(intent);
+                }
+            });
+
+            recyclerView.setAdapter(postsAdapter);
+        }
     }
 
     private void setupProfileInfo() {
