@@ -38,6 +38,7 @@ import com.cookwise2.utils.GeminiManager;
 import com.cookwise2.utils.PostsAdapter;
 import com.cookwise2.utils.RecipePost;
 import com.cookwise2.utils.UserImageSelector;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -146,8 +147,7 @@ public class FeedActivity extends AppCompatActivity {
         buttonAddPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(FeedActivity.this, AddPostActivity.class);
-                startActivity(intent);
+                showAddOptionsDialog();
             }
         });
 
@@ -168,10 +168,11 @@ public class FeedActivity extends AppCompatActivity {
                 processImageWithAi(uri);
             }
         });
-        FloatingActionButton fabScanner = findViewById(R.id.fabAiScanner);
-        fabScanner.setOnClickListener(v -> {
-            userImageSelector.showImageSourceDialog();
 
+        FloatingActionButton button_move_to_profile = findViewById(R.id.button_move_to_profile);
+        button_move_to_profile.setOnClickListener(v -> {
+            Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
+            startActivity(intent);
 
         });
 
@@ -373,7 +374,7 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
     private void setupFabScrollBehavior() {
-        FloatingActionButton fabAiScanner = findViewById(R.id.fabAiScanner);
+        FloatingActionButton fabAiScanner = findViewById(R.id.button_move_to_profile);
         com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAddPost = findViewById(R.id.button_addPost);
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -422,6 +423,28 @@ public class FeedActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+
+
+    private void showAddOptionsDialog() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_add_options, null);
+
+        // בחירה בסריקה
+        view.findViewById(R.id.optionScanAi).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            userImageSelector.showImageSourceDialog();
+        });
+
+        // בחירה בהוספה ידנית
+        view.findViewById(R.id.optionManualAdd).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            startActivity(new Intent(FeedActivity.this, AddPostActivity.class));
+        });
+
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
     }
 
 
