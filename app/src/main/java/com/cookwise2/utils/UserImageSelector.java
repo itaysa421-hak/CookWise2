@@ -17,6 +17,8 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.cookwise2.R;
+
 import java.io.File;
 
 public class UserImageSelector {
@@ -54,19 +56,27 @@ public class UserImageSelector {
 
 
     public void showImageSourceDialog() {
-        String[] options = {"Take Photo", "Choose from Gallery"};
-        new AlertDialog.Builder(activity)
-                .setTitle("Select Picture")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        Log.d(TAG, "User chose to take a photo");
-                        openCamera();
-                    } else {
-                        Log.d(TAG, "User chose to pick from gallery");
-                        openImagePicker();
-                    }
-                })
-                .show();
+        com.google.android.material.bottomsheet.BottomSheetDialog bottomSheetDialog =
+                new com.google.android.material.bottomsheet.BottomSheetDialog(activity);
+
+        android.view.View view = activity.getLayoutInflater().inflate(R.layout.dialog_select_image_source, null);
+
+        // טיפול בלחיצה על מצלמה
+        view.findViewById(R.id.btnCamera).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            Log.d(TAG, "User chose to take a photo");
+            openCamera();
+        });
+
+        // טיפול בלחיצה על גלריה
+        view.findViewById(R.id.btnGallery).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            Log.d(TAG, "User chose to pick from gallery");
+            openImagePicker();
+        });
+
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
     }
     private void openCamera() {
         Log.d(TAG, "openCamera: start");

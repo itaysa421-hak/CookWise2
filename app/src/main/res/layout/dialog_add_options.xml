@@ -114,8 +114,7 @@
                 android:layout_height="40dp"
                 android:padding="8dp"
                 android:src="@android:drawable/ic_menu_edit"
-                android:background="#F1F1F1"
-                android:backgroundTint="#F1F1F1"
+                android:background="@drawable/bg_icon_ai"
                 app:tint="#44474E" />
 
             <LinearLayout
