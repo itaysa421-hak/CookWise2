@@ -72,6 +72,7 @@ public class FeedActivity extends AppCompatActivity {
     private UserImageSelector userImageSelector;
     private Dialog scannerDialog;
     private List<String> savedPostIds = new ArrayList<>();
+    private EditText etSearch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +111,7 @@ public class FeedActivity extends AppCompatActivity {
         fetchAllUsers();
 
         // הגדרת חיפוש טקסטואלי
-        EditText etSearch = findViewById(R.id.etSearch);
+        etSearch = findViewById(R.id.etSearch);
         etSearch.addTextChangedListener(new android.text.TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -195,8 +196,10 @@ public class FeedActivity extends AppCompatActivity {
 
     private void applyFilters() {
         if (currentFilterCategory.equalsIgnoreCase("Users")) {
+            etSearch.setHint("Search users...");
             showUsersResults();
         } else {
+            etSearch.setHint("Search Recipe...");
             showPostsResults();
         }
     }
