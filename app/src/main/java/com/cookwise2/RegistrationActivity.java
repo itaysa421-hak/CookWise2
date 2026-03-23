@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -46,8 +47,7 @@ public class RegistrationActivity extends AppCompatActivity {
 
         ImageView profilePictureImageView = findViewById(R.id.iv_profile_picture);
         userImageSelector = new UserImageSelector(this, profilePictureImageView);
-        Button choosePictureButton = findViewById(R.id.btn_choose_picture);
-        choosePictureButton.setOnClickListener(new View.OnClickListener() {
+        profilePictureImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 userImageSelector.showImageSourceDialog();
@@ -59,6 +59,16 @@ public class RegistrationActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 registerButtonClick();
+            }
+        });
+
+        TextView moveToLogin = findViewById(R.id.move_to_login);
+        moveToLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent intent = new Intent(RegistrationActivity.this, LoginActivity.class);
+                startActivity(intent);
             }
         });
 
