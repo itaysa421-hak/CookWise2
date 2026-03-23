@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 
 import com.bumptech.glide.Glide;
 import com.cookwise2.utils.RecipePost;
@@ -31,13 +32,14 @@ public class RecipeDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // הפיכת הסטטוס בר לשקוף למראה מודרני (תמונה שנכנסת תחתיו)
         makeStatusBarTransparent();
-
         setContentView(R.layout.activity_recipe_details);
 
         initViews();
         setupToolbar();
+
+        // הגדרת שם הטרנזישן - חייב להיות תואם ל-FeedActivity
+        ViewCompat.setTransitionName(ivDetailImage, "recipe_image_transition");
 
         RecipePost post = (RecipePost) getIntent().getSerializableExtra("RECIPE_POST");
 
@@ -68,8 +70,8 @@ public class RecipeDetailsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-        // פונקציית החזור
-        toolbar.setNavigationOnClickListener(v -> finish());
+        // שימוש ב-supportFinishAfterTransition כדי שהאנימציה תחזור ברוורס
+        toolbar.setNavigationOnClickListener(v -> supportFinishAfterTransition());
     }
 
     private void initViews() {
@@ -146,10 +148,16 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         chip.setText(text);
         chip.setChipCornerRadius(24f);
         chip.setChipBackgroundColorResource(android.R.color.white);
-        chip.setChipStrokeColorResource(android.R.color.black); // וודא שיש לך צבע כזה //FIXME
+        chip.setChipStrokeColorResource(android.R.color.black);
         chip.setChipStrokeWidth(2f);
         chip.setTextSize(14);
         chip.setClickable(false);
         cgDetailsCategories.addView(chip);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // גם כאן, נשתמש בגרסה שתומכת בטרנזישן חזור
+        supportFinishAfterTransition();
     }
 }

@@ -11,7 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +21,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -52,33 +52,31 @@ import java.util.List;
 import java.util.Map;
 
 public class FeedActivity extends AppCompatActivity {
-    private static final String TAG = "FeedActivity";
-
     private String nickname;
     private RecyclerView recyclerView;
-
-    // אדפטורים ורשימות לפוסטים
     private PostsAdapter postsAdapter;
     private List<RecipePost> posts = new ArrayList<>();
     private List<RecipePost> allPosts = new ArrayList<>();
-
-    // אדפטורים ורשימות למשתמשים
     private UserAdapter userAdapter;
     private List<UserAccount> usersList = new ArrayList<>();
     private List<UserAccount> allUsers = new ArrayList<>();
-
     private String currentSearchQuery = "";
     private String currentFilterCategory = "All";
     private UserImageSelector userImageSelector;
     private Dialog scannerDialog;
     private List<String> savedPostIds = new ArrayList<>();
     private EditText etSearch;
+    private ImageView ivUserImage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_feed);
+
+        ivUserImage = findViewById(R.id.ivUserImage);
+        // הגדרת שם טרנזישן לתמונה האישית שלך למעלה
+        ViewCompat.setTransitionName(ivUserImage, "profile_image_transition");
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -89,10 +87,8 @@ public class FeedActivity extends AppCompatActivity {
         readUserData();
         fetchSavedPosts();
 
-        // אתחול UI בסיסי
         TextView tvUsername = findViewById(R.id.tvUsername);
         tvUsername.setText(nickname);
-        ImageView ivUserImage = findViewById(R.id.ivUserImage);
 
         String currentUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String imageUrl = "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + currentUid + ".jpg";
@@ -103,28 +99,20 @@ public class FeedActivity extends AppCompatActivity {
                 .circleCrop()
                 .into(ivUserImage);
 
-        // אתחול ה-RecyclerView והאדפטורים
         initRecyclerView();
-
-        // האזנה לשינויים ב-Database
         registerToNewPosts();
         fetchAllUsers();
 
-        // הגדרת חיפוש טקסטואלי
         etSearch = findViewById(R.id.etSearch);
         etSearch.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 currentSearchQuery = s.toString();
                 applyFilters();
             }
-            @Override
-            public void afterTextChanged(android.text.Editable s) {}
+            @Override public void afterTextChanged(android.text.Editable s) {}
         });
 
-        // הגדרת צ'יפים לסינון
         com.google.android.material.chip.ChipGroup chipGroup = findViewById(R.id.chipGroupFilters);
         chipGroup.setOnCheckedChangeListener((group, checkedId) -> {
             com.google.android.material.chip.Chip chip = findViewById(checkedId);
@@ -134,36 +122,20 @@ public class FeedActivity extends AppCompatActivity {
             }
         });
 
-        // כפתור התנתקות
-        ImageButton buttonLogout = findViewById(R.id.buttonLogout);
-        buttonLogout.setOnClickListener(v -> {
+        findViewById(R.id.buttonLogout).setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(FeedActivity.this, LoginActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(FeedActivity.this, LoginActivity.class));
             finish();
         });
 
-        // מעבר לפרופיל אישי
-        View userProfileContainer = findViewById(R.id.userProfileContainer);
-        userProfileContainer.setOnClickListener(v -> {
-            Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
-            startActivity(intent);
-        });
+        findViewById(R.id.userProfileContainer).setOnClickListener(v -> openUserProfile(currentUid, ivUserImage));
 
-        // כפתור הוספת פוסט/סריקה
-        Button buttonAddPost = findViewById(R.id.button_addPost);
-        buttonAddPost.setOnClickListener(v -> showAddOptionsDialog());
+        findViewById(R.id.button_addPost).setOnClickListener(v -> showAddOptionsDialog());
 
-        // אתחול סלקטור התמונות (חובה ב-onCreate)
         userImageSelector = new UserImageSelector(this, null);
         userImageSelector.setOnImageSelectedListener(this::processImageWithAi);
 
-        // כפתור צף לפרופיל
-        FloatingActionButton button_move_to_profile = findViewById(R.id.button_move_to_profile);
-        button_move_to_profile.setOnClickListener(v -> {
-            Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
-            startActivity(intent);
-        });
+        findViewById(R.id.button_move_to_profile).setOnClickListener(v -> openUserProfile(currentUid, null));
 
         setupFabScrollBehavior();
     }
@@ -172,26 +144,51 @@ public class FeedActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // אדפטור פוסטים
         postsAdapter = new PostsAdapter(posts, savedPostIds, post -> {
             Intent intent = new Intent(FeedActivity.this, RecipeDetailsActivity.class);
             intent.putExtra("RECIPE_POST", post);
-            startActivity(intent);
+            int position = posts.indexOf(post);
+            View itemView = recyclerView.getLayoutManager().findViewByPosition(position);
+            if (itemView != null) {
+                ImageView sharedImageView = itemView.findViewById(R.id.iv_post_image);
+                if (sharedImageView != null) {
+                    ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                            this, sharedImageView, "recipe_image_transition");
+                    startActivity(intent, options.toBundle());
+                } else { startActivity(intent); }
+            } else { startActivity(intent); }
         });
 
-        postsAdapter.setOnUserClickListener(this::openUserProfile);
+        postsAdapter.setOnUserClickListener(uid -> openUserProfile(uid, null));
 
-        // אדפטור משתמשים
-        userAdapter = new UserAdapter(usersList, this::openUserProfile);
+        userAdapter = new UserAdapter(usersList, uid -> {
+            int position = -1;
+            for (int i = 0; i < usersList.size(); i++) {
+                if (usersList.get(i).getUid().equals(uid)) {
+                    position = i;
+                    break;
+                }
+            }
+            View itemView = recyclerView.getLayoutManager().findViewByPosition(position);
+            if (itemView != null) {
+                ImageView avatar = itemView.findViewById(R.id.ivUserAvatar);
+                openUserProfile(uid, avatar);
+            } else { openUserProfile(uid, null); }
+        });
 
-        // כברירת מחדל נציג פוסטים
         recyclerView.setAdapter(postsAdapter);
     }
 
-    private void openUserProfile(String uid) {
+    private void openUserProfile(String uid, View sharedView) {
         Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
         intent.putExtra("EXTRA_USER_ID", uid);
-        startActivity(intent);
+        if (sharedView != null) {
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    this, sharedView, "profile_image_transition");
+            startActivity(intent, options.toBundle());
+        } else {
+            startActivity(intent);
+        }
     }
 
     private void applyFilters() {
@@ -211,49 +208,30 @@ public class FeedActivity extends AppCompatActivity {
                 filteredUsers.add(user);
             }
         }
-
         usersList.clear();
         usersList.addAll(filteredUsers);
-
-        if (recyclerView.getAdapter() != userAdapter) {
-            recyclerView.setAdapter(userAdapter);
-        }
+        if (recyclerView.getAdapter() != userAdapter) recyclerView.setAdapter(userAdapter);
         userAdapter.notifyDataSetChanged();
     }
 
     private void showPostsResults() {
-        if (allPosts == null) return;
         List<RecipePost> filteredList = new ArrayList<>();
-
         for (RecipePost post : allPosts) {
             boolean matchesSearch = post.getTitle().toLowerCase().contains(currentSearchQuery.toLowerCase());
-            boolean matchesCategory = false;
-
-            if (currentFilterCategory.equals("All")) {
-                matchesCategory = true;
-            } else {
-                Map<String, Object> tags = post.getClassification();
-                if (tags != null) {
-                    for (Object value : tags.values()) {
-                        if (String.valueOf(value).equalsIgnoreCase(currentFilterCategory)) {
-                            matchesCategory = true;
-                            break;
-                        }
+            boolean matchesCategory = currentFilterCategory.equals("All");
+            if (!matchesCategory && post.getClassification() != null) {
+                for (Object value : post.getClassification().values()) {
+                    if (String.valueOf(value).equalsIgnoreCase(currentFilterCategory)) {
+                        matchesCategory = true;
+                        break;
                     }
                 }
             }
-
-            if (matchesSearch && matchesCategory) {
-                filteredList.add(post);
-            }
+            if (matchesSearch && matchesCategory) filteredList.add(post);
         }
-
         posts.clear();
         posts.addAll(filteredList);
-
-        if (recyclerView.getAdapter() != postsAdapter) {
-            recyclerView.setAdapter(postsAdapter);
-        }
+        if (recyclerView.getAdapter() != postsAdapter) recyclerView.setAdapter(postsAdapter);
         postsAdapter.notifyDataSetChanged();
     }
 
@@ -264,12 +242,9 @@ public class FeedActivity extends AppCompatActivity {
                     allUsers.clear();
                     for (QueryDocumentSnapshot doc : value) {
                         UserAccount user = doc.toObject(UserAccount.class);
-                        // יצירת אובייקט עם ה-ID מהמסמך
                         allUsers.add(new UserAccount(doc.getId(), user.getNickname()));
                     }
-                    if (currentFilterCategory.equalsIgnoreCase("Users")) {
-                        applyFilters();
-                    }
+                    if (currentFilterCategory.equalsIgnoreCase("Users")) applyFilters();
                 });
     }
 
@@ -278,15 +253,11 @@ public class FeedActivity extends AppCompatActivity {
                 .orderBy("createdAt", Query.Direction.ASCENDING)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null || snapshots == null) return;
-
                     for (DocumentChange dc : snapshots.getDocumentChanges()) {
                         RecipePost post = dc.getDocument().toObject(RecipePost.class);
                         post.setId(dc.getDocument().getId());
-
                         switch (dc.getType()) {
-                            case ADDED:
-                                allPosts.add(0, post);
-                                break;
+                            case ADDED: allPosts.add(0, post); break;
                             case MODIFIED:
                                 for (int i = 0; i < allPosts.size(); i++) {
                                     if (allPosts.get(i).getId().equals(post.getId())) {
@@ -295,14 +266,10 @@ public class FeedActivity extends AppCompatActivity {
                                     }
                                 }
                                 break;
-                            case REMOVED:
-                                allPosts.removeIf(p -> p.getId().equals(post.getId()));
-                                break;
+                            case REMOVED: allPosts.removeIf(p -> p.getId().equals(post.getId())); break;
                         }
                     }
-                    if (!currentFilterCategory.equalsIgnoreCase("Users")) {
-                        applyFilters();
-                    }
+                    if (!currentFilterCategory.equalsIgnoreCase("Users")) applyFilters();
                 });
     }
 
@@ -310,145 +277,98 @@ public class FeedActivity extends AppCompatActivity {
         try {
             InputStream imageStream = getContentResolver().openInputStream(imageUri);
             Bitmap bitmap = BitmapFactory.decodeStream(imageStream);
-
             scannerDialog = new Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
             scannerDialog.setContentView(R.layout.dialog_ai_scanner);
             scannerDialog.setCancelable(false);
-
             ImageView ivScan = scannerDialog.findViewById(R.id.ivScanImage);
             View scannerLine = scannerDialog.findViewById(R.id.vScannerLine);
             TextView tvStatus = scannerDialog.findViewById(R.id.tvAiStatus);
-
             ivScan.setImageBitmap(bitmap);
-
-            android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(
-                    scannerLine, "translationY", 0f, 1100f);
+            android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofFloat(scannerLine, "translationY", 0f, 1100f);
             animator.setDuration(1500);
             animator.setRepeatMode(android.animation.ValueAnimator.REVERSE);
             animator.setRepeatCount(android.animation.ValueAnimator.INFINITE);
             animator.start();
-
             android.os.Handler dotsHandler = new android.os.Handler();
             Runnable dotsRunnable = new Runnable() {
                 int count = 0;
-                @Override
-                public void run() {
-                    String dots = "";
-                    for (int i = 0; i < count; i++) dots += ".";
+                @Override public void run() {
+                    String dots = ""; for (int i = 0; i < count; i++) dots += ".";
                     tvStatus.setText("AI ANALYZING" + dots);
-                    count = (count + 1) % 4;
-                    dotsHandler.postDelayed(this, 500);
+                    count = (count + 1) % 4; dotsHandler.postDelayed(this, 500);
                 }
             };
             dotsHandler.post(dotsRunnable);
             scannerDialog.show();
-
-            String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. " +
-                    "Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
-
+            String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
             GeminiManager.getInstance().sendImageAndText(bitmap, prompt, this, new GeminiManager.GeminiCallback() {
-                @Override
-                public void onSuccess(String result) {
+                @Override public void onSuccess(String result) {
                     runOnUiThread(() -> {
                         dotsHandler.removeCallbacks(dotsRunnable);
-                        if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
+                        if (scannerDialog != null) scannerDialog.dismiss();
                         handleAiResult(result, imageUri);
                     });
                 }
-
-                @Override
-                public void onError(Throwable error) {
+                @Override public void onError(Throwable error) {
                     runOnUiThread(() -> {
                         dotsHandler.removeCallbacks(dotsRunnable);
-                        if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
-                        Toast.makeText(FeedActivity.this, "AI Scan failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        if (scannerDialog != null) scannerDialog.dismiss();
+                        Toast.makeText(FeedActivity.this, "Scan failed", Toast.LENGTH_SHORT).show();
                     });
                 }
             });
-        } catch (Exception e) {
-            if (scannerDialog != null && scannerDialog.isShowing()) scannerDialog.dismiss();
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void handleAiResult(String rawJson, Uri imageUri) {
         try {
             String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();
             JSONObject json = new JSONObject(cleanJson);
-
             Intent intent = new Intent(this, AddPostActivity.class);
             intent.putExtra("ai_title", json.getString("title"));
             intent.putExtra("ai_instructions", json.getString("instructions"));
             intent.putExtra("uri_image", imageUri);
-
             JSONArray ingArray = json.getJSONArray("ingredients");
             ArrayList<String> ingList = new ArrayList<>();
-            for (int i = 0; i < ingArray.length(); i++) {
-                ingList.add(ingArray.getString(i));
-            }
+            for (int i = 0; i < ingArray.length(); i++) ingList.add(ingArray.getString(i));
             intent.putStringArrayListExtra("ai_ingredients", ingList);
             startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "AI response was not clear enough, try another photo", Toast.LENGTH_SHORT).show();
-        }
+        } catch (Exception e) { Toast.makeText(this, "AI error", Toast.LENGTH_SHORT).show(); }
     }
 
     private void readUserData() {
-        SharedPreferences sharedPreferences = getSharedPreferences("userInfo", MODE_PRIVATE);
-        nickname = sharedPreferences.getString("nickname", "N/A");
+        SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
+        nickname = sp.getString("nickname", "N/A");
     }
 
     private void fetchSavedPosts() {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         FirebaseFirestore.getInstance().collection("users").document(uid)
-                .addSnapshotListener((documentSnapshot, e) -> {
-                    if (e != null || documentSnapshot == null) return;
-                    List<String> fetchedIds = (List<String>) documentSnapshot.get("savedPosts");
+                .addSnapshotListener((ds, e) -> {
+                    if (e != null || ds == null) return;
+                    List<String> fetchedIds = (List<String>) ds.get("savedPosts");
                     if (fetchedIds != null) {
-                        savedPostIds.clear();
-                        savedPostIds.addAll(fetchedIds);
+                        savedPostIds.clear(); savedPostIds.addAll(fetchedIds);
                         if (postsAdapter != null) postsAdapter.notifyDataSetChanged();
                     }
                 });
     }
 
     private void showAddOptionsDialog() {
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        BottomSheetDialog bsd = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_options, null);
-
-        view.findViewById(R.id.optionScanAi).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            userImageSelector.showImageSourceDialog();
-        });
-
-        view.findViewById(R.id.optionManualAdd).setOnClickListener(v -> {
-            bottomSheetDialog.dismiss();
-            startActivity(new Intent(FeedActivity.this, AddPostActivity.class));
-        });
-
-        bottomSheetDialog.setContentView(view);
-        bottomSheetDialog.show();
+        view.findViewById(R.id.optionScanAi).setOnClickListener(v -> { bsd.dismiss(); userImageSelector.showImageSourceDialog(); });
+        view.findViewById(R.id.optionManualAdd).setOnClickListener(v -> { bsd.dismiss(); startActivity(new Intent(this, AddPostActivity.class)); });
+        bsd.setContentView(view); bsd.show();
     }
 
     private void setupFabScrollBehavior() {
-        FloatingActionButton fabProfile = findViewById(R.id.button_move_to_profile);
-        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAddPost = findViewById(R.id.button_addPost);
-
+        FloatingActionButton fab = findViewById(R.id.button_move_to_profile);
+        com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAdd = findViewById(R.id.button_addPost);
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                if (dy > 0) {
-                    if (fabProfile.isShown()) fabProfile.hide();
-                    if (btnAddPost.isExtended()) btnAddPost.shrink();
-                    btnAddPost.hide();
-                } else if (dy < 0) {
-                    if (!fabProfile.isShown()) fabProfile.show();
-                    if (!btnAddPost.isShown()) {
-                        btnAddPost.show();
-                        btnAddPost.extend();
-                    }
-                }
+            @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
+                if (dy > 0) { fab.hide(); btnAdd.shrink(); btnAdd.hide(); }
+                else if (dy < 0) { fab.show(); btnAdd.show(); btnAdd.extend(); }
             }
         });
     }
