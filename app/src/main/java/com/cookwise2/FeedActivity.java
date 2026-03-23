@@ -196,7 +196,7 @@ public class FeedActivity extends AppCompatActivity {
 
     private void applyFilters() {
         if (currentFilterCategory.equalsIgnoreCase("Users")) {
-            etSearch.setHint("Search users...");
+            etSearch.setHint("Search Users...");
             showUsersResults();
         } else {
             etSearch.setHint("Search Recipe...");

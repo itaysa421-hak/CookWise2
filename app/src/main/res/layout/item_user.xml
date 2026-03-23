@@ -35,7 +35,7 @@
         <ImageView
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:src="@android:drawable/ic_media_play"
+            android:src="@drawable/ic_person"
             app:tint="#D1D1D1" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
