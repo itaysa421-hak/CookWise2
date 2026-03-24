@@ -17,6 +17,8 @@ import androidx.core.view.ViewCompat;
 import com.bumptech.glide.Glide;
 import com.cookwise2.utils.RecipePost;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -27,6 +29,9 @@ public class RecipeDetailsActivity extends AppCompatActivity {
     private TextView tvDetailTitle, tvDetailOwner, tvDetailIngredients, tvDetailDescription;
     private com.google.android.material.chip.ChipGroup cgDetailsCategories;
     private Toolbar toolbar;
+    private com.google.android.material.floatingactionbutton.FloatingActionButton fabFavorite;
+    private boolean isSaved = false;
+    private String currentUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +59,54 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         }
         CollapsingToolbarLayout collapsingToolbar = findViewById(R.id.collapsing_toolbar);
         collapsingToolbar.setContentScrimColor(ContextCompat.getColor(this, android.R.color.transparent));
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            checkIfPostIsSaved(post.getId());
+
+            fabFavorite.setOnClickListener(v -> {
+                toggleSavePost(post.getId());
+            });
+        }
+    }
+    private void checkIfPostIsSaved(String postId) {
+        FirebaseFirestore.getInstance().collection("users").document(currentUserId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        java.util.List<String> savedPosts = (java.util.List<String>) documentSnapshot.get("savedPosts");
+                        isSaved = savedPosts != null && savedPosts.contains(postId);
+                        updateFabIcon();
+                    }
+                });
+    }
+
+    private void toggleSavePost(String postId) {
+        com.google.firebase.firestore.DocumentReference userRef =
+                FirebaseFirestore.getInstance().collection("users").document(currentUserId);
+
+        if (isSaved) {
+            // הסרה משמורים
+            userRef.update("savedPosts", com.google.firebase.firestore.FieldValue.arrayRemove(postId))
+                    .addOnSuccessListener(aVoid -> {
+                        isSaved = false;
+                        updateFabIcon();
+                        android.widget.Toast.makeText(this, "Removed from saved", android.widget.Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            // הוספה לשמורים
+            userRef.update("savedPosts", com.google.firebase.firestore.FieldValue.arrayUnion(postId))
+                    .addOnSuccessListener(aVoid -> {
+                        isSaved = true;
+                        updateFabIcon();
+                        android.widget.Toast.makeText(this, "Added to saved!", android.widget.Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
+
+    private void updateFabIcon() {
+        fabFavorite.setImageResource(isSaved ?
+                R.drawable.ic_bookmark_filled : R.drawable.ic_bookmark_border);
     }
 
     private void makeStatusBarTransparent() {
@@ -82,6 +135,7 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         tvDetailDescription = findViewById(R.id.tvDetailDescription);
         cgDetailsCategories = findViewById(R.id.cgDetailsCategories);
         toolbar = findViewById(R.id.toolbar);
+        fabFavorite = findViewById(R.id.fab_favorite);
     }
 
     private void populateData(RecipePost post) {
@@ -158,6 +212,7 @@ public class RecipeDetailsActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         // גם כאן, נשתמש בגרסה שתומכת בטרנזישן חזור
+        super.onBackPressed();
         supportFinishAfterTransition();
     }
 }
