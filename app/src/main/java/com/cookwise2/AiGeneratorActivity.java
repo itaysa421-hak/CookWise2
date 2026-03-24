@@ -42,7 +42,7 @@ public class AiGeneratorActivity extends AppCompatActivity {
     private ValueAnimator colorAnimator; // אנימטור לשינוי צבעים
     private Handler loadingHandler = new Handler();
     private int phraseIndex = 0;
-    private String[] loadingPhrases = {
+    private final String[] loadingPhrases = {
             "Preheating the neural networks...",
             "Chopping digital onions (no tears!)",
             "Seasoning the data with logic...",

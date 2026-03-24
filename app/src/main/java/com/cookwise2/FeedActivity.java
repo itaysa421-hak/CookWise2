@@ -300,7 +300,21 @@ public class FeedActivity extends AppCompatActivity {
             };
             dotsHandler.post(dotsRunnable);
             scannerDialog.show();
-            String prompt = "Analyze this image of food. Identify the dish and provide a professional recipe. Return ONLY a JSON object: {\"title\": \"...\", \"ingredients\": [\"...\"], \"instructions\": \"...\"}";
+            String prompt = "Act as a professional Chef. Analyze the provided image of food. " +
+                    "Task: Generate a high-quality recipe based on the dish identified. " +
+                    "Constraints: " +
+                    "1. If no food is detected, return: {\"error\": \"NOT_FOOD\"}. " +
+                    "2. Use precise culinary terms and clear measurements. " +
+                    "3. Output MUST be a single, valid JSON object ONLY. " +
+                    "4. Strictly NO markdown formatting, NO backticks (```), and NO introductory text. " +
+                    "5. Use the exact keys: \"title\", \"ingredients\", \"instructions\". " +
+
+                    "JSON Structure to follow: " +
+                    "{" +
+                    "  \"title\": \"Name of the dish\"," +
+                    "  \"ingredients\": [\"List of items with quantities\"]," +
+                    "  \"instructions\": \"Step-by-step preparation text\"" +
+                    "}";
             GeminiManager.getInstance().sendImageAndText(bitmap, prompt, this, new GeminiManager.GeminiCallback() {
                 @Override public void onSuccess(String result) {
                     runOnUiThread(() -> {
