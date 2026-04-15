@@ -159,9 +159,10 @@
         android:layout_margin="20dp"
         android:text="Create"
         android:textColor="@color/white"
-        app:backgroundTint="#1A1C1E"
+        app:backgroundTint="@color/DarkSeaGreen"
         app:icon="@android:drawable/ic_input_add"
-        app:iconTint="@color/white" />
+        app:iconTint="@color/white"
+        />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/button_move_to_profile"
@@ -170,7 +171,11 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
         android:src="@drawable/ic_person"
-        app:backgroundTint="@color/black"
-        app:tint="@color/white" />
+        app:backgroundTint="@color/DarkSeaGreen"
+        app:tint="@color/white"
+        app:strokeColor="@android:color/black"
+        app:strokeWidth="2dp"
+
+        />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

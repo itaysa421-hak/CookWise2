@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,7 +31,6 @@ public class LoginActivity extends AppCompatActivity {
 
     EditText emailEditText;
     EditText passwordEditText;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,7 +51,6 @@ public class LoginActivity extends AppCompatActivity {
 
         emailEditText = findViewById(R.id.et_Email);
         passwordEditText = findViewById(R.id.et_password);
-
         Button btn_login = findViewById(R.id.btn_login);
         btn_login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,7 +82,6 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(LoginActivity.this, "Please fill in all fields", Toast.LENGTH_LONG).show();
             return;
         }
-
         // Perform Firebase authentication
         auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
