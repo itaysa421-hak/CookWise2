@@ -9,6 +9,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -17,6 +19,7 @@ import androidx.core.view.ViewCompat;
 import com.bumptech.glide.Glide;
 import com.cookwise2.utils.RecipePost;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -44,20 +47,18 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         initViews();
         setupToolbar();
 
-        // הגדרת שם הטרנזישן - חייב להיות תואם ל-FeedActivity
-        ViewCompat.setTransitionName(ivDetailImage, "recipe_image_transition");
-
         RecipePost post = (RecipePost) getIntent().getSerializableExtra("RECIPE_POST");
 
         if (post != null) {
+            ViewCompat.setTransitionName(ivDetailImage, "recipe_image_transition");
             populateData(post);
 
-            // הוסף את זה אחרי ה-populateData(post)
+            // בדיקה אם המשתמש הוא בעל הפוסט כדי להציג כפתור מחיקה
             if (FirebaseAuth.getInstance().getCurrentUser() != null &&
                     post.getOwnerUid().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
 
                 btnDelete.setVisibility(View.VISIBLE);
-                btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog(post.getId()));
+                btnDelete.setOnClickListener(v -> showDeleteBottomSheet(post.getId()));
             }
 
             tvDetailOwner.setOnClickListener(v -> {
@@ -65,19 +66,21 @@ public class RecipeDetailsActivity extends AppCompatActivity {
                 intent.putExtra("EXTRA_USER_ID", post.getOwnerUid());
                 startActivity(intent);
             });
+
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                checkIfPostIsSaved(post.getId());
+
+                fabFavorite.setOnClickListener(v -> {
+                    toggleSavePost(post.getId());
+                });
+            }
         }
+
         CollapsingToolbarLayout collapsingToolbar = findViewById(R.id.collapsing_toolbar);
         collapsingToolbar.setContentScrimColor(ContextCompat.getColor(this, android.R.color.transparent));
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            checkIfPostIsSaved(post.getId());
-
-            fabFavorite.setOnClickListener(v -> {
-                toggleSavePost(post.getId());
-            });
-        }
     }
+
     private void checkIfPostIsSaved(String postId) {
         FirebaseFirestore.getInstance().collection("users").document(currentUserId)
                 .get()
@@ -95,20 +98,18 @@ public class RecipeDetailsActivity extends AppCompatActivity {
                 FirebaseFirestore.getInstance().collection("users").document(currentUserId);
 
         if (isSaved) {
-            // הסרה משמורים
             userRef.update("savedPosts", com.google.firebase.firestore.FieldValue.arrayRemove(postId))
                     .addOnSuccessListener(aVoid -> {
                         isSaved = false;
                         updateFabIcon();
-                        android.widget.Toast.makeText(this, "Removed from saved", android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Removed from saved", Toast.LENGTH_SHORT).show();
                     });
         } else {
-            // הוספה לשמורים
             userRef.update("savedPosts", com.google.firebase.firestore.FieldValue.arrayUnion(postId))
                     .addOnSuccessListener(aVoid -> {
                         isSaved = true;
                         updateFabIcon();
-                        android.widget.Toast.makeText(this, "Added to saved!", android.widget.Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Added to saved!", Toast.LENGTH_SHORT).show();
                     });
         }
     }
@@ -132,7 +133,6 @@ public class RecipeDetailsActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
-        // שימוש ב-supportFinishAfterTransition כדי שהאנימציה תחזור ברוורס
         toolbar.setNavigationOnClickListener(v -> supportFinishAfterTransition());
     }
 
@@ -221,29 +221,40 @@ public class RecipeDetailsActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // גם כאן, נשתמש בגרסה שתומכת בטרנזישן חזור
         super.onBackPressed();
         supportFinishAfterTransition();
     }
 
-    private void showDeleteConfirmationDialog(String postId) {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Delete Recipe")
-                .setMessage("Are you sure you want to delete this recipe? This action cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> deleteRecipe(postId))
-                .setNegativeButton("Cancel", null)
-                .show();
+    /**
+     * פתיחת דיאלוג מחיקה עם ה-IDs המתוקנים
+     */
+    private void showDeleteBottomSheet(String postId) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_delete_bottom_sheet, null);
+
+        // שימוש ב-IDs המדויקים מה-XML החדש
+        view.findViewById(R.id.card_confirm_delete).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+            deleteRecipe(postId);
+        });
+
+        view.findViewById(R.id.card_cancel_delete).setOnClickListener(v -> {
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.setContentView(view);
+        bottomSheetDialog.show();
     }
 
     private void deleteRecipe(String postId) {
         FirebaseFirestore.getInstance().collection("posts").document(postId)
                 .delete()
                 .addOnSuccessListener(aVoid -> {
-                    android.widget.Toast.makeText(this, "Recipe deleted successfully", android.widget.Toast.LENGTH_SHORT).show();
-                    finish(); // סגירת המסך וחזרה לפיד
+                    Toast.makeText(this, "Recipe deleted successfully", Toast.LENGTH_SHORT).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
-                    android.widget.Toast.makeText(this, "Error deleting recipe", android.widget.Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Error deleting recipe", Toast.LENGTH_SHORT).show();
                 });
     }
 }
