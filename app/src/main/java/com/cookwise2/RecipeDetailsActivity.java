@@ -32,6 +32,7 @@ public class RecipeDetailsActivity extends AppCompatActivity {
     private com.google.android.material.floatingactionbutton.FloatingActionButton fabFavorite;
     private boolean isSaved = false;
     private String currentUserId;
+    private android.widget.ImageButton btnDelete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,14 @@ public class RecipeDetailsActivity extends AppCompatActivity {
 
         if (post != null) {
             populateData(post);
+
+            // הוסף את זה אחרי ה-populateData(post)
+            if (FirebaseAuth.getInstance().getCurrentUser() != null &&
+                    post.getOwnerUid().equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+
+                btnDelete.setVisibility(View.VISIBLE);
+                btnDelete.setOnClickListener(v -> showDeleteConfirmationDialog(post.getId()));
+            }
 
             tvDetailOwner.setOnClickListener(v -> {
                 Intent intent = new Intent(RecipeDetailsActivity.this, ProfileActivity.class);
@@ -136,6 +145,7 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         cgDetailsCategories = findViewById(R.id.cgDetailsCategories);
         toolbar = findViewById(R.id.toolbar);
         fabFavorite = findViewById(R.id.fab_favorite);
+        btnDelete = findViewById(R.id.btnDeleteRecipe);
     }
 
     private void populateData(RecipePost post) {
@@ -214,5 +224,26 @@ public class RecipeDetailsActivity extends AppCompatActivity {
         // גם כאן, נשתמש בגרסה שתומכת בטרנזישן חזור
         super.onBackPressed();
         supportFinishAfterTransition();
+    }
+
+    private void showDeleteConfirmationDialog(String postId) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Recipe")
+                .setMessage("Are you sure you want to delete this recipe? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteRecipe(postId))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteRecipe(String postId) {
+        FirebaseFirestore.getInstance().collection("posts").document(postId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    android.widget.Toast.makeText(this, "Recipe deleted successfully", android.widget.Toast.LENGTH_SHORT).show();
+                    finish(); // סגירת המסך וחזרה לפיד
+                })
+                .addOnFailureListener(e -> {
+                    android.widget.Toast.makeText(this, "Error deleting recipe", android.widget.Toast.LENGTH_SHORT).show();
+                });
     }
 }
