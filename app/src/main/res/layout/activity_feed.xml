@@ -158,12 +158,21 @@
         android:layout_gravity="bottom|start"
         android:layout_margin="20dp"
         android:text="Create"
-        android:textColor="@color/white"
-        app:backgroundTint="@color/DarkSeaGreen"
-        app:icon="@android:drawable/ic_input_add"
-        app:iconTint="@color/white"
-        />
+        android:textAllCaps="false"
+        android:textColor="#1A1C1E"
+        android:fontFamily="sans-serif-black"
 
+    app:cornerRadius="100dp"
+
+    app:backgroundTint="#B3FFFFFF"
+    app:strokeColor="#FFFFFF"
+    app:strokeWidth="1.5dp"
+
+    app:icon="@android:drawable/ic_input_add"
+    app:iconTint="#1A1C1E"
+    app:elevation="8dp"
+    app:pressedTranslationZ="4dp"
+    app:rippleColor="#33000000" />
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/button_move_to_profile"
         android:layout_width="wrap_content"
@@ -171,11 +180,14 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
         android:src="@drawable/ic_person"
-        app:backgroundTint="@color/DarkSeaGreen"
-        app:tint="@color/white"
-        app:strokeColor="@android:color/black"
-        app:strokeWidth="2dp"
 
-        />
+    app:backgroundTint="#B3FFFFFF"
+    app:strokeColor="#FFFFFF"
+    app:strokeWidth="1.5dp"
+    app:elevation="8dp"
+
+    app:tint="#1A1C1E"
+    app:rippleColor="#33000000"
+    app:borderWidth="0dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

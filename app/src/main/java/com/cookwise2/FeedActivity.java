@@ -75,7 +75,6 @@ public class FeedActivity extends AppCompatActivity {
         setContentView(R.layout.activity_feed);
 
         ivUserImage = findViewById(R.id.ivUserImage);
-        // הגדרת שם טרנזישן לתמונה האישית שלך למעלה
         ViewCompat.setTransitionName(ivUserImage, "profile_image_transition");
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -140,6 +139,7 @@ public class FeedActivity extends AppCompatActivity {
         setupFabScrollBehavior();
     }
 
+    // הגדרת רשימת הפוסטים (RecyclerView), יצירת האדפטרים וניהול לחיצות על פוסטים או משתמשים
     private void initRecyclerView() {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -179,6 +179,7 @@ public class FeedActivity extends AppCompatActivity {
         recyclerView.setAdapter(postsAdapter);
     }
 
+    // מעבר למסך פרופיל של משתמש לפי ה-UID שלו, עם תמיכה באנימציית מעבר חלקה
     private void openUserProfile(String uid, View sharedView) {
         Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
         intent.putExtra("EXTRA_USER_ID", uid);
@@ -191,6 +192,7 @@ public class FeedActivity extends AppCompatActivity {
         }
     }
 
+    // ניהול הלוגיקה של הסינון: החלטה אם להציג תוצאות של פוסטים או של משתמשים לפי בחירת הצ'יפ
     private void applyFilters() {
         if (currentFilterCategory.equalsIgnoreCase("Users")) {
             etSearch.setHint("Search Users...");
@@ -201,6 +203,7 @@ public class FeedActivity extends AppCompatActivity {
         }
     }
 
+    // סינון רשימת המשתמשים לפי טקסט החיפוש שהוזן ועדכון הרשימה המוצגת
     private void showUsersResults() {
         List<UserAccount> filteredUsers = new ArrayList<>();
         for (UserAccount user : allUsers) {
@@ -214,6 +217,7 @@ public class FeedActivity extends AppCompatActivity {
         userAdapter.notifyDataSetChanged();
     }
 
+    // סינון רשימת הפוסטים לפי חיפוש טקסטואלי וגם לפי קטגוריית סיווג (בשרי, חלבי וכו')
     private void showPostsResults() {
         List<RecipePost> filteredList = new ArrayList<>();
         for (RecipePost post : allPosts) {
@@ -235,6 +239,7 @@ public class FeedActivity extends AppCompatActivity {
         postsAdapter.notifyDataSetChanged();
     }
 
+    // שליפת כל המשתמשים מ-Firestore פעם אחת והאזנה לשינויים כדי לעדכן את המאגר המקומי
     private void fetchAllUsers() {
         FirebaseFirestore.getInstance().collection("users")
                 .addSnapshotListener((value, error) -> {
@@ -248,6 +253,7 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
+    // רישום למאזין (SnapshotListener) עבור פוסטים חדשים ב-Firestore ועדכון הפיד בזמן אמת
     private void registerToNewPosts() {
         FirebaseFirestore.getInstance().collection("posts")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
@@ -273,6 +279,7 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
+    // קבלת תמונה, הצגת אנימציית סריקה ושליחתה ל-Gemini AI כדי להפיק ממנה מתכון אוטומטי
     private void processImageWithAi(Uri imageUri) {
         try {
             InputStream imageStream = getContentResolver().openInputStream(imageUri);
@@ -334,6 +341,7 @@ public class FeedActivity extends AppCompatActivity {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    // פיענוח תוצאת ה-JSON מה-AI והעברת הנתונים למסך הוספת פוסט כדי שהמשתמש יאשר אותם
     private void handleAiResult(String rawJson, Uri imageUri) {
         try {
             String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();
@@ -350,11 +358,13 @@ public class FeedActivity extends AppCompatActivity {
         } catch (Exception e) { Toast.makeText(this, "AI error", Toast.LENGTH_SHORT).show(); }
     }
 
+    // קריאת נתוני המשתמש (כמו הכינוי) מהזיכרון המקומי של המכשיר (SharedPreferences)
     private void readUserData() {
         SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
         nickname = sp.getString("nickname", "N/A");
     }
 
+    // שליפת מזהי הפוסטים שהמשתמש שמר (Bookmarks) כדי לסמן אותם בפיד בהתאם
     private void fetchSavedPosts() {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         FirebaseFirestore.getInstance().collection("users").document(uid)
@@ -368,6 +378,7 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
+    // הצגת תפריט האפשרויות להוספת פוסט (סריקת AI או הזנה ידנית) כחלונית תחתונה (BottomSheet)
     private void showAddOptionsDialog() {
         BottomSheetDialog bsd = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_options, null);
@@ -376,6 +387,7 @@ public class FeedActivity extends AppCompatActivity {
         bsd.setContentView(view); bsd.show();
     }
 
+    // הגדרת התנהגות הכפתורים הצפים: הסתרה/כיווץ בזמן גלילה מטה והצגה בזמן גלילה מעלה
     private void setupFabScrollBehavior() {
         FloatingActionButton fab = findViewById(R.id.button_move_to_profile);
         com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAdd = findViewById(R.id.button_addPost);
