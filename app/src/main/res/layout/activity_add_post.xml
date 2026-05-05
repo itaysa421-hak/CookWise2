@@ -201,7 +201,7 @@
         android:layout_margin="20dp"
         android:backgroundTint="@color/CornflowerBlue"
         android:text="Publish Recipe"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         android:textSize="18sp"
         android:textStyle="bold"
         app:cornerRadius="16dp"
