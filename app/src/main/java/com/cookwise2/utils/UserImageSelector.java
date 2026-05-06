@@ -49,7 +49,6 @@ public class UserImageSelector {
         initResultLaunchers();
     }
 
-    // --- הוספת פונקציה להגדרת ה-Listener מבחוץ ---
     public void setOnImageSelectedListener(ImageSelectionListener listener) {
         this.listener = listener;
     }

@@ -14,7 +14,6 @@ public class UserAccount {
     public String getUid() { return uid; }
     public String getNickname() { return nickname; }
 
-    // בונה את ה-URL של התמונה לפי ה-UID כפי שעשית בפיד
     public String getProfileImageUrl() {
         return "https://wkxapzreydqpqsthggzk.supabase.co/storage/v1/object/public/my-bucket/images/profile-pics/" + uid + ".jpg";
     }
