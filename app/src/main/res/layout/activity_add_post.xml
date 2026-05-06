@@ -5,7 +5,11 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".AddPostActivity">
+    tools:context=".AddPostActivity"
+    android:background="#FAFAFA"
+
+
+    >
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
