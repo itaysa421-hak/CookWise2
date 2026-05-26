@@ -68,6 +68,10 @@ public class FeedActivity extends AppCompatActivity {
     private EditText etSearch;
     private ImageView ivUserImage;
 
+    /**
+     * Initializes the activity, sets up the UI, loads user data, fetches saved posts,
+     * sets up search and filter listeners, and handles logout/profile navigation.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,7 +143,10 @@ public class FeedActivity extends AppCompatActivity {
         setupFabScrollBehavior();
     }
 
-    // הגדרת רשימת הפוסטים (RecyclerView), יצירת האדפטרים וניהול לחיצות על פוסטים או משתמשים
+    /**
+     * Sets up the RecyclerView for displaying posts and users.
+     * It initializes the adapters and defines click listeners for post items and user profiles.
+     */
     private void initRecyclerView() {
         recyclerView = findViewById(R.id.recycler_posts);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -179,7 +186,10 @@ public class FeedActivity extends AppCompatActivity {
         recyclerView.setAdapter(postsAdapter);
     }
 
-    // מעבר למסך פרופיל של משתמש לפי ה-UID שלו, עם תמיכה באנימציית מעבר חלקה
+    /**
+     * Navigates to the user's profile screen based on their UID.
+     * Supports an optional shared element transition for the profile image.
+     */
     private void openUserProfile(String uid, View sharedView) {
         Intent intent = new Intent(FeedActivity.this, ProfileActivity.class);
         intent.putExtra("EXTRA_USER_ID", uid);
@@ -192,7 +202,10 @@ public class FeedActivity extends AppCompatActivity {
         }
     }
 
-    // ניהול הלוגיקה של הסינון: החלטה אם להציג תוצאות של פוסטים או של משתמשים לפי בחירת הצ'יפ
+    /**
+     * Manages the filtering logic, deciding whether to display filtered posts or users
+     * based on the currently selected category chip.
+     */
     private void applyFilters() {
         if (currentFilterCategory.equalsIgnoreCase("Users")) {
             etSearch.setHint("Search Users...");
@@ -203,7 +216,10 @@ public class FeedActivity extends AppCompatActivity {
         }
     }
 
-    // סינון רשימת המשתמשים לפי טקסט החיפוש שהוזן ועדכון הרשימה המוצגת
+    /**
+     * Filters the list of all users based on the current search query.
+     * Updates the RecyclerView to display the filtered user list.
+     */
     private void showUsersResults() {
         List<UserAccount> filteredUsers = new ArrayList<>();
         for (UserAccount user : allUsers) {
@@ -217,7 +233,10 @@ public class FeedActivity extends AppCompatActivity {
         userAdapter.notifyDataSetChanged();
     }
 
-    // סינון רשימת הפוסטים לפי חיפוש טקסטואלי וגם לפי קטגוריית סיווג (בשרי, חלבי וכו')
+    /**
+     * Filters the list of all recipe posts based on the current search query and
+     * the selected classification category. Updates the RecyclerView with the filtered posts.
+     */
     private void showPostsResults() {
         List<RecipePost> filteredList = new ArrayList<>();
         for (RecipePost post : allPosts) {
@@ -239,7 +258,10 @@ public class FeedActivity extends AppCompatActivity {
         postsAdapter.notifyDataSetChanged();
     }
 
-    // שליפת כל המשתמשים מ-Firestore פעם אחת והאזנה לשינויים כדי לעדכן את המאגר המקומי
+    /**
+     * Fetches all user accounts from Firestore once and then listens for real-time changes
+     * to keep the local list of users updated.
+     */
     private void fetchAllUsers() {
         FirebaseFirestore.getInstance().collection("users")
                 .addSnapshotListener((value, error) -> {
@@ -253,7 +275,10 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
-    // רישום למאזין (SnapshotListener) עבור פוסטים חדשים ב-Firestore ועדכון הפיד בזמן אמת
+    /**
+     * Registers a SnapshotListener for new posts in Firestore.
+     * This updates the feed in real-time as posts are added, modified, or removed.
+     */
     private void registerToNewPosts() {
         FirebaseFirestore.getInstance().collection("posts")
                 .orderBy("createdAt", Query.Direction.ASCENDING)
@@ -279,7 +304,10 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
-    // קבלת תמונה, הצגת אנימציית סריקה ושליחתה ל-Gemini AI כדי להפיק ממנה מתכון אוטומטי
+    /**
+     * Takes an image URI, displays a scanning animation, and sends the image to Gemini AI
+     * to generate an automatic recipe. Handles the AI's response.
+     */
     private void processImageWithAi(Uri imageUri) {
         try {
             InputStream imageStream = getContentResolver().openInputStream(imageUri);
@@ -341,7 +369,10 @@ public class FeedActivity extends AppCompatActivity {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    // פיענוח תוצאת ה-JSON מה-AI והעברת הנתונים למסך הוספת פוסט כדי שהמשתמש יאשר אותם
+    /**
+     * Parses the JSON result received from the AI.
+     * Extracts recipe details and passes them to the AddPostActivity for user review and confirmation.
+     */
     private void handleAiResult(String rawJson, Uri imageUri) {
         try {
             String cleanJson = rawJson.replace("```json", "").replace("```", "").trim();
@@ -358,13 +389,18 @@ public class FeedActivity extends AppCompatActivity {
         } catch (Exception e) { Toast.makeText(this, "AI error", Toast.LENGTH_SHORT).show(); }
     }
 
-    // קריאת נתוני המשתמש (כמו הכינוי) מהזיכרון המקומי של המכשיר (SharedPreferences)
+    /**
+     * Reads the current user's nickname from the device's local storage (SharedPreferences).
+     */
     private void readUserData() {
         SharedPreferences sp = getSharedPreferences("userInfo", MODE_PRIVATE);
         nickname = sp.getString("nickname", "N/A");
     }
 
-    // שליפת מזהי הפוסטים שהמשתמש שמר (Bookmarks) כדי לסמן אותם בפיד בהתאם
+    /**
+     * Fetches the IDs of posts that the current user has saved (bookmarked).
+     * This information is used to mark saved posts in the feed.
+     */
     private void fetchSavedPosts() {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
         FirebaseFirestore.getInstance().collection("users").document(uid)
@@ -378,7 +414,10 @@ public class FeedActivity extends AppCompatActivity {
                 });
     }
 
-    // הצגת תפריט האפשרויות להוספת פוסט (סריקת AI או הזנה ידנית) כחלונית תחתונה (BottomSheet)
+    /**
+     * Displays a bottom sheet dialog with options for adding a new post:
+     * either by scanning an image with AI or by manual entry.
+     */
     private void showAddOptionsDialog() {
         BottomSheetDialog bsd = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_options, null);
@@ -387,7 +426,10 @@ public class FeedActivity extends AppCompatActivity {
         bsd.setContentView(view); bsd.show();
     }
 
-    // הגדרת התנהגות הכפתורים הצפים: הסתרה/כיווץ בזמן גלילה מטה והצגה בזמן גלילה מעלה
+    /**
+     * Configures the behavior of the floating action buttons (FABs).
+     * They hide/shrink when scrolling down and show/extend when scrolling up.
+     */
     private void setupFabScrollBehavior() {
         FloatingActionButton fab = findViewById(R.id.button_move_to_profile);
         com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton btnAdd = findViewById(R.id.button_addPost);
