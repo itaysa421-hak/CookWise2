@@ -78,7 +78,6 @@ public class AiGeneratorActivity extends AppCompatActivity {
         tvLoadingMessage = findViewById(R.id.tvLoadingMessage);
 
         // מציאת הספינר בתוך ה-Overlay
-        // שים לב: וודא שב-XML של ה-loadingOverlay ה-ID של ה-ProgressBar הוא pbSpinner
         pbSpinner = loadingOverlay.findViewById(R.id.pbSpinner);
     }
 
