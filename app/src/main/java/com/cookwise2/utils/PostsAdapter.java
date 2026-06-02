@@ -27,31 +27,43 @@ import java.util.Map;
 
 public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHolder> {
 
+    // --- משתני המחלקה ---
     private List<RecipePost> posts;
-    private OnItemClickListener listener;
-    private OnUserClickListener userClickListener; // מאזין חדש
     private List<String> savedPostIds;
     private boolean isSavedTab = false;
 
+    // מאזינים (Listeners)
+    private OnItemClickListener listener;
+    private OnUserClickListener userClickListener;
+    private OnSavedStatusChangedListener savedStatusListener; // הועבר לראש המחלקה למען הסדר
+
+    // --- ממשקים (Interfaces) ---
     public interface OnItemClickListener {
         void onItemClick(RecipePost post);
     }
 
-    // ממשק חדש למעבר לפרופיל
     public interface OnUserClickListener {
         void onUserClick(String uid);
     }
 
+    // הועבר למעלה - מגדיר את האירוע שישוגר כשיש שינוי בסטטוס השמירה
+    public interface OnSavedStatusChangedListener {
+        void onSavedStatusChanged(int newCount);
+    }
+
+    // --- בנאי (Constructor) ---
     public PostsAdapter(List<RecipePost> posts, List<String> savedPostIds, OnItemClickListener listener) {
         this.posts = posts;
         this.savedPostIds = savedPostIds;
         this.listener = listener;
     }
 
-    // Setter למאזין המשתמש
+    // --- פונקציות Setter למאזינים ---
     public void setOnUserClickListener(OnUserClickListener userClickListener) {
         this.userClickListener = userClickListener;
     }
+
+
 
     @NonNull
     @Override
@@ -128,24 +140,6 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         }
     }
 
-    static class PostViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvOwner, tvDate, tvTime, tvDifficulty, tvCuisine;
-        ImageView ivPostImage;
-        ImageButton btnSave;
-
-        public PostViewHolder(@NonNull View itemView) {
-            super(itemView);
-            tvTitle = itemView.findViewById(R.id.tv_post_title);
-            tvOwner = itemView.findViewById(R.id.tv_post_owner);
-            tvDate = itemView.findViewById(R.id.tv_post_created_at);
-            tvTime = itemView.findViewById(R.id.tv_post_time);
-            tvDifficulty = itemView.findViewById(R.id.tv_post_difficulty);
-            tvCuisine = itemView.findViewById(R.id.tv_post_cuisine);
-            ivPostImage = itemView.findViewById(R.id.iv_post_image);
-            btnSave = itemView.findViewById(R.id.btn_save_post);
-        }
-    }
-
     public void toggleSavePost(String postId, int position) {
         if (FirebaseAuth.getInstance().getCurrentUser() == null) return;
 
@@ -162,8 +156,10 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
             userRef.update("savedPosts", FieldValue.arrayUnion(postId));
         }
 
+        // תוקן: הגנה מפני קריסה (NullPointerException) במקרה שרשימת ה-IDs היא null
         if (savedStatusListener != null) {
-            savedStatusListener.onSavedStatusChanged(savedPostIds.size());
+            int currentCount = (savedPostIds != null) ? savedPostIds.size() : 0;
+            savedStatusListener.onSavedStatusChanged(currentCount);
         }
 
         if (isSavedTab && isSaved) {
@@ -174,17 +170,22 @@ public class PostsAdapter extends RecyclerView.Adapter<PostsAdapter.PostViewHold
         }
     }
 
-    public void setIsSavedTab(boolean isSavedTab) {
-        this.isSavedTab = isSavedTab;
-    }
+    // --- ViewHolder ---
+    static class PostViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvOwner, tvDate, tvTime, tvDifficulty, tvCuisine;
+        ImageView ivPostImage;
+        ImageButton btnSave;
 
-    public interface OnSavedStatusChangedListener {
-        void onSavedStatusChanged(int newCount);
-    }
-
-    private OnSavedStatusChangedListener savedStatusListener;
-
-    public void setOnSavedStatusChangedListener(OnSavedStatusChangedListener listener) {
-        this.savedStatusListener = listener;
+        public PostViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvTitle = itemView.findViewById(R.id.tv_post_title);
+            tvOwner = itemView.findViewById(R.id.tv_post_owner);
+            tvDate = itemView.findViewById(R.id.tv_post_created_at);
+            tvTime = itemView.findViewById(R.id.tv_post_time);
+            tvDifficulty = itemView.findViewById(R.id.tv_post_difficulty);
+            tvCuisine = itemView.findViewById(R.id.tv_post_cuisine);
+            ivPostImage = itemView.findViewById(R.id.iv_post_image);
+            btnSave = itemView.findViewById(R.id.btn_save_post);
+        }
     }
 }

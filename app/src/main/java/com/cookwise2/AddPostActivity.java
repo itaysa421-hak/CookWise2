@@ -81,7 +81,6 @@ public class AddPostActivity extends AppCompatActivity {
         btnAddIngredient = findViewById(R.id.btnAddIngredient);
 
         ivRecipeImage = findViewById(R.id.ivRecipeImage);
-        // בתוך ה-onCreate, אחרי שזיהית את הכפתור:
         View btnAi = findViewById(R.id.btnAiAssistant);
 
         MaterialCardView cardAi = findViewById(R.id.cardAiContainer);
@@ -115,7 +114,7 @@ public class AddPostActivity extends AppCompatActivity {
             ArrayList<String> ingredients = getIntent().getStringArrayListExtra("ai_ingredients");
             if (ingredients != null) {
                 for (String ing : ingredients) {
-                    addIngredientRowFromAi(ing); // הפונקציה שכבר כתבנו קודם
+                    addIngredientRowFromAi(ing);
                 }
             }
         }
