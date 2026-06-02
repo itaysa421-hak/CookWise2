@@ -35,7 +35,6 @@ public class AiGeneratorActivity extends AppCompatActivity {
 
     private boolean isPantryMode = false;
 
-    // רכיבי ה-Overlay המשודרגים
     private View loadingOverlay;
     private TextView tvLoadingMessage;
     private ProgressBar pbSpinner; // רפרנס לספינר בשביל שינוי צבע
@@ -190,6 +189,8 @@ public class AiGeneratorActivity extends AppCompatActivity {
         });
     }
 
+
+    //Animation function
     private void startAiLoading() {
         loadingOverlay.setVisibility(View.VISIBLE);
         phraseIndex = 0;
@@ -213,6 +214,8 @@ public class AiGeneratorActivity extends AppCompatActivity {
         updateLoadingText();
     }
 
+
+    //Animation function
     private void updateLoadingText() {
         if (loadingOverlay != null && loadingOverlay.getVisibility() == View.VISIBLE) {
             // אנימציית Fade Out לטקסט הישן
@@ -229,6 +232,8 @@ public class AiGeneratorActivity extends AppCompatActivity {
         }
     }
 
+
+    //Animation function
     private void stopAiLoading() {
         if (loadingOverlay != null) {
             loadingOverlay.setVisibility(View.GONE);
